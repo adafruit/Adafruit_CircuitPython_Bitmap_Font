@@ -1,14 +1,18 @@
 import sys
 
 def load_font(filename):
-    f = open(filename, "r")
+    f = open(filename, "rb")
     first_four = f.read(4)
-    if filename.endswith("bdf") and first_four == "STAR":
-        import bdf
+    #print(first_four)
+    if filename.endswith("bdf") and first_four == b"STAR":
+        from . import bdf
         return bdf.BDF(f)
-    elif filename.endswith("pcf") and first_four == "\x01fcp":
+    elif filename.endswith("pcf") and first_four == b"\x01fcp":
         import pcf
         return pcf.PCF(f)
+    elif filename.endswith("ttf") and first_four == b"\x00\x01\x00\x00":
+        import ttf
+        return ttf.TTF(f)
 
 
 
