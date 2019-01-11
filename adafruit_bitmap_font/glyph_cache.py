@@ -12,9 +12,11 @@ class GlyphCache:
             b = bytearray(4)
             x, y, dx, dy = info["bounds"]
             bmp = displayio.Bitmap(x, y, 2)
+            w = ((x-1)//8)+1
+            #print(info["bitmap"])
             for y in range(y):
-                b[0] = info["bitmap"][y]
-
+                for x in range(w):
+                    b[x] = info["bitmap"][y*w+x]
                 bmp._load_row(y, b)
             info["bitmap"] = bmp
         self._glyphs[code_point] = info

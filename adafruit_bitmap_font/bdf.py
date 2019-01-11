@@ -91,10 +91,16 @@ class BDF(GlyphCache):
             elif character:
                 if desired_character:
                     bits = int(line.strip(), 16)
+                    #print(hex(bits))
                     shift = 8 - bounds[0]
                     #bits >>= shift
-                    bitmap[current_y * rounded_x] = bits
-                    # pixels = ("{0:0" + str(bounds[0]) +"b}").format(bits).replace("0", " ").replace("1", "*")
+                    for i in range(rounded_x):
+                        idx = current_y * rounded_x + i
+                        val = (bits >> ((rounded_x-i-1)*8)) & 0xFF
+                        #print("idx:", idx, "val:", hex(val))
+                        bitmap[idx] = val
+                    #pixels = ("{0:0" + str(bounds[0]) +"b}").format(bits).replace("0", " ").replace("1", "*")
+                    #print(pixels)
                     #bitmap.append(pixels)
                     current_y += 1
 
