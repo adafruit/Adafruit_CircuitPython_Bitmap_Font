@@ -1,4 +1,5 @@
 import displayio
+import gc
 
 class GlyphCache:
     def __init__(self):
@@ -20,4 +21,5 @@ class GlyphCache:
                 bmp._load_row(y, b)
             info["bitmap"] = bmp
         self._glyphs[code_point] = info
+        gc.collect()
         return info
