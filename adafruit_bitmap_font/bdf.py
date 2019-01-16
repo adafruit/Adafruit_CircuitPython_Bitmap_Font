@@ -49,7 +49,8 @@ class BDF(GlyphCache):
             elif line.startswith("SIZE"):
                 _, self.point_size, self.x_resolution, self.y_resolution = line.split()
             elif line.startswith("COMMENT"):
-                token, comment = line.split(" ", 1)
+                pass
+                #token, comment = line.split(" ", 1)
                 # print(comment.strip("\n\""))
             elif line.startswith("STARTCHAR"):
                 # print(lineno, line.strip())
