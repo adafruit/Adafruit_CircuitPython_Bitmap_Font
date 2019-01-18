@@ -1,4 +1,5 @@
 from .glyph_cache import GlyphCache
+import displayio
 
 class BDF(GlyphCache):
     def __init__(self, f):
@@ -24,88 +25,85 @@ class BDF(GlyphCache):
                 return (int(x), int(y), int(dx), int(dy))
         return None
 
-    def _get_glyph(self, input_code_point):
-        self.file.seek(0)
-        self.characters = {}
-
+    def load_glyphs(self, code_points):
         metadata = True
         character = False
-        bounds = None
-        bitmap = None
         code_point = None
-        character_name = None
-        lineno = 0
-        count = 0
-        current_y = 0
         rounded_x = 1
+        bytes_per_row = 1
         desired_character = False
+        current_info = None
+        current_y = 0
+        total_remaining = len(code_points)
+
+        x, _, _, _ = self.get_bounding_box()
+        # create a scratch bytearray to load pixels into
+        scratch_row = memoryview(bytearray((((x-1)//32)+1) * 4))
+
+        self.file.seek(0)
         while True:
             line = self.file.readline()
-            line = str(line, "utf-8")
             if not line:
                 break
-            if line.startswith("CHARS "):
+            if line.startswith(b"CHARS "):
                 metadata = False
-            elif line.startswith("SIZE"):
+            elif line.startswith(b"SIZE"):
                 _, self.point_size, self.x_resolution, self.y_resolution = line.split()
-            elif line.startswith("COMMENT"):
+            elif line.startswith(b"COMMENT"):
                 pass
-                #token, comment = line.split(" ", 1)
-                # print(comment.strip("\n\""))
-            elif line.startswith("STARTCHAR"):
+            elif line.startswith(b"STARTCHAR"):
                 # print(lineno, line.strip())
                 #_, character_name = line.split()
                 character = True
-            elif line.startswith("ENDCHAR"):
+            elif line.startswith(b"ENDCHAR"):
                 character = False
-                count += 1
                 if desired_character:
-                    #print(lineno, character_name, bounds)
-                    return {"bitmap": bitmap, "bounds": bounds, "shift": (shift_x, shift_y)}
-            elif line.startswith("BBX"):
+                    self._glyphs[code_point] = current_info
+                    if total_remaining == 0:
+                        return
+                desired_character = False
+            elif line.startswith(b"BBX"):
                 if desired_character:
                     _, x, y, dx, dy = line.split()
                     x = int(x)
                     y = int(y)
                     dx = int(dx)
                     dy = int(dy)
-                    bounds = (x, y, dx, dy)
-            elif line.startswith("BITMAP"):
+                    current_info["bounds"] = (x, y, dx, dy)
+                    current_info["bitmap"] = displayio.Bitmap(x, y, 2)
+            elif line.startswith(b"BITMAP"):
                 if desired_character:
                     rounded_x = x // 8
                     if x % 8 > 0:
                         rounded_x += 1
-                    bitmap = bytearray(rounded_x * y)
+                    bytes_per_row = rounded_x
+                    if bytes_per_row % 4 > 0:
+                        bytes_per_row += 4 - bytes_per_row % 4
                     current_y = 0
-                pass
-            elif line.startswith("ENCODING"):
+            elif line.startswith(b"ENCODING"):
                 _, code_point = line.split()
                 code_point = int(code_point)
-                if code_point == input_code_point:
-                    desired_character = True
-            elif line.startswith("DWIDTH"):
-                _, shift_x, shift_y = line.split()
-                shift_x = int(shift_x)
-                shift_y = int(shift_y)
-            elif line.startswith("SWIDTH"):
+                if code_point == code_points or code_point in code_points:
+                    total_remaining -= 1
+                    if code_point not in self._glyphs:
+                        desired_character = True
+                        current_info = {"bitmap": None, "bounds": None, "shift": None}
+            elif line.startswith(b"DWIDTH"):
+                if desired_character:
+                    _, shift_x, shift_y = line.split()
+                    shift_x = int(shift_x)
+                    shift_y = int(shift_y)
+                    current_info["shift"] = (shift_x, shift_y)
+            elif line.startswith(b"SWIDTH"):
                 pass
             elif character:
                 if desired_character:
                     bits = int(line.strip(), 16)
-                    #print(hex(bits))
-                    shift = 8 - bounds[0]
-                    #bits >>= shift
                     for i in range(rounded_x):
-                        idx = current_y * rounded_x + i
                         val = (bits >> ((rounded_x-i-1)*8)) & 0xFF
-                        #print("idx:", idx, "val:", hex(val))
-                        bitmap[idx] = val
-                    #pixels = ("{0:0" + str(bounds[0]) +"b}").format(bits).replace("0", " ").replace("1", "*")
-                    #print(pixels)
-                    #bitmap.append(pixels)
+                        scratch_row[i] = val
+                    current_info["bitmap"]._load_row(current_y, scratch_row[:bytes_per_row])
                     current_y += 1
-
             elif metadata:
                 #print(lineno, line.strip())
                 pass
-            lineno += 1
