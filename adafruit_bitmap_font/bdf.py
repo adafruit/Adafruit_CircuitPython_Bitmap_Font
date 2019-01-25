@@ -1,12 +1,12 @@
 from .glyph_cache import GlyphCache
-import displayio
 
 class BDF(GlyphCache):
-    def __init__(self, f):
+    def __init__(self, f, bitmap_class):
         super().__init__()
         self.file = f
         self.name = f
         self.file.seek(0)
+        self.bitmap_class = bitmap_class
         line = self.file.readline()
         line = str(line, "utf-8")
         if not line or not line.startswith("STARTFONT 2.1"):
@@ -70,7 +70,7 @@ class BDF(GlyphCache):
                     dx = int(dx)
                     dy = int(dy)
                     current_info["bounds"] = (x, y, dx, dy)
-                    current_info["bitmap"] = displayio.Bitmap(x, y, 2)
+                    current_info["bitmap"] = self.bitmap_class(x, y, 2)
             elif line.startswith(b"BITMAP"):
                 if desired_character:
                     rounded_x = x // 8

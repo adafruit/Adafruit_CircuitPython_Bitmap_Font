@@ -1,12 +1,15 @@
 import sys
 
-def load_font(filename):
+def load_font(filename, bitmap=None):
+    if not bitmap:
+        import displayio
+        bitmap = displayio.Bitmap
     f = open(filename, "rb")
     first_four = f.read(4)
     #print(first_four)
     if filename.endswith("bdf") and first_four == b"STAR":
         from . import bdf
-        return bdf.BDF(f)
+        return bdf.BDF(f, bitmap)
     elif filename.endswith("pcf") and first_four == b"\x01fcp":
         import pcf
         return pcf.PCF(f)

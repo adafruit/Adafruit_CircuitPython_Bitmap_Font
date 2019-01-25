@@ -1,4 +1,3 @@
-import displayio
 import gc
 
 class GlyphCache:
