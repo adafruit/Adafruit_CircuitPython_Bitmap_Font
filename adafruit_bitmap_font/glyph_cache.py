@@ -10,6 +10,7 @@ class GlyphCache:
 
         s = set()
         s.add(code_point)
+        self._glyphs[code_point] = None
         self.load_glyphs(s)
         gc.collect()
         return self._glyphs[code_point]

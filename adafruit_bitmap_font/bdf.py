@@ -85,7 +85,7 @@ class BDF(GlyphCache):
                 code_point = int(code_point)
                 if code_point == code_points or code_point in code_points:
                     total_remaining -= 1
-                    if code_point not in self._glyphs:
+                    if code_point not in self._glyphs or not self._glyphs[code_point]:
                         desired_character = True
                         current_info = {"bitmap": None, "bounds": None, "shift": None}
             elif line.startswith(b"DWIDTH"):
