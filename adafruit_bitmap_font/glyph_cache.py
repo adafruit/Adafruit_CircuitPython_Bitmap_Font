@@ -1,4 +1,5 @@
 import gc
+import collections
 
 class GlyphCache:
     def __init__(self):
