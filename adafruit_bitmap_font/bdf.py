@@ -1,5 +1,6 @@
 import gc
 from .glyph_cache import GlyphCache
+from displayio import Glyph
 
 class BDF(GlyphCache):
     def __init__(self, f, bitmap_class):
@@ -30,16 +31,14 @@ class BDF(GlyphCache):
         metadata = True
         character = False
         code_point = None
-        rounded_x = 1
         bytes_per_row = 1
         desired_character = False
         current_info = None
         current_y = 0
+        rounded_x = 1
         total_remaining = len(code_points)
 
         x, _, _, _ = self.get_bounding_box()
-        # create a scratch bytearray to load pixels into
-        scratch_row = memoryview(bytearray((((x-1)//32)+1) * 4))
 
         self.file.seek(0)
         while True:
@@ -59,7 +58,16 @@ class BDF(GlyphCache):
             elif line.startswith(b"ENDCHAR"):
                 character = False
                 if desired_character:
-                    self._glyphs[code_point] = current_info
+                    bounds = current_info["bounds"]
+                    shift = current_info["shift"]
+                    self._glyphs[code_point] = Glyph(current_info["bitmap"],
+                                                     0,
+                                                     bounds[0],
+                                                     bounds[1],
+                                                     bounds[2],
+                                                     bounds[3],
+                                                     shift[0],
+                                                     shift[1])
                     gc.collect()
                     if total_remaining == 0:
                         return
@@ -101,10 +109,19 @@ class BDF(GlyphCache):
             elif character:
                 if desired_character:
                     bits = int(line.strip(), 16)
+                    width = current_info["bounds"][0]
+                    start = current_y * width
+                    x = 0
                     for i in range(rounded_x):
                         val = (bits >> ((rounded_x-i-1)*8)) & 0xFF
-                        scratch_row[i] = val
-                    current_info["bitmap"]._load_row(current_y, scratch_row[:bytes_per_row])
+                        for j in range(7,-1,-1):
+                            if x >= width:
+                                break
+                            bit = 0
+                            if val & (1 << j) != 0:
+                                bit = 1
+                            current_info["bitmap"][start + x] = bit
+                            x += 1
                     current_y += 1
             elif metadata:
                 #print(lineno, line.strip())
