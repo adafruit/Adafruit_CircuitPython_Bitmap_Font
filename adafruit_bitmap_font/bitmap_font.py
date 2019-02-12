@@ -61,30 +61,3 @@ def load_font(filename, bitmap=None):
         import ttf
         return ttf.TTF(font_file)
     return None
-
-if __name__ == "__main__":
-    #pylint: disable=invalid-name
-    import os
-    import sys
-    sys.path.append(os.path.join(sys.path[0], "test"))
-    font = load_font(sys.argv[1])
-
-    _, height, _, dy = font.get_bounding_box()
-    for y in range(height):
-        for c in "Adafruit CircuitPython":
-            glyph = font.get_glyph(ord(c))
-            if not glyph:
-                continue
-            glyph_y = y + (glyph.height - (height + dy)) + glyph.dy
-            pixels = []
-            if 0 <= glyph_y < glyph.height:
-                for i in range(glyph.width):
-                    value = glyph.bitmap[i, glyph_y]
-                    pixel = " "
-                    if value > 0:
-                        pixel = "#"
-                    pixels.append(pixel)
-            else:
-                pixels = ""
-            print("".join(pixels) + " " * (glyph.shift_x - len(pixels)), end="")
-        print()
