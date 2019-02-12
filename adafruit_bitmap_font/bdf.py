@@ -1,3 +1,4 @@
+import gc
 from .glyph_cache import GlyphCache
 
 class BDF(GlyphCache):
@@ -59,6 +60,7 @@ class BDF(GlyphCache):
                 character = False
                 if desired_character:
                     self._glyphs[code_point] = current_info
+                    gc.collect()
                     if total_remaining == 0:
                         return
                 desired_character = False
