@@ -1,3 +1,5 @@
+# pylint: skip-file
+# Remove the above when PCF is actually supported.
 
 class BDF:
     def __init__(self, f):

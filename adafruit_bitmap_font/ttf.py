@@ -1,3 +1,6 @@
+# pylint: skip-file
+# Remove the above when TTF is actually supported.
+
 import struct
 
 

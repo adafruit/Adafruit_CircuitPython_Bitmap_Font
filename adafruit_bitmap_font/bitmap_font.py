@@ -20,8 +20,7 @@ def load_font(filename, bitmap=None):
 
 
 if __name__ == "__main__":
-    f = load_font(sys.argv[1])
-    # print(f.characters)
+    font = load_font(sys.argv[1])
     for c in "Adafruit CircuitPython":
         o = ord(c)
         if o not in f.characters:
