@@ -1,8 +1,53 @@
+# The MIT License (MIT)
+#
+# Copyright (c) 2019 Scott Shawcroft for Adafruit Industries LLC
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+"""
+`adafruit_bitmap_font.bdf`
+====================================================
+
+Loads BDF format fonts.
+
+* Author(s): Scott Shawcroft
+
+Implementation Notes
+--------------------
+
+**Hardware:**
+
+**Software and Dependencies:**
+
+* Adafruit CircuitPython firmware for the supported boards:
+  https://github.com/adafruit/circuitpython/releases
+
+"""
+
 import gc
-from .glyph_cache import GlyphCache
 from displayio import Glyph
+from .glyph_cache import GlyphCache
+
+__version__ = "0.0.0-auto.0"
+__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
 
 class BDF(GlyphCache):
+    """Loads glyphs from a BDF file in the given bitmap_class."""
     def __init__(self, f, bitmap_class):
         super().__init__()
         self.file = f
@@ -13,8 +58,12 @@ class BDF(GlyphCache):
         line = str(line, "utf-8")
         if not line or not line.startswith("STARTFONT 2.1"):
             raise ValueError("Unsupported file version")
+        self.point_size = None
+        self.x_resolution = None
+        self.y_resolution = None
 
     def get_bounding_box(self):
+        """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
         self.file.seek(0)
         while True:
             line = self.file.readline()
@@ -23,17 +72,18 @@ class BDF(GlyphCache):
                 break
 
             if line.startswith("FONTBOUNDINGBOX "):
-                _, x, y, dx, dy = line.split()
-                return (int(x), int(y), int(dx), int(dy))
+                _, x, y, x_offset, y_offset = line.split()
+                return (int(x), int(y), int(x_offset), int(y_offset))
         return None
 
     def load_glyphs(self, code_points):
+        # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
         metadata = True
         character = False
         code_point = None
         bytes_per_row = 1
         desired_character = False
-        current_info = None
+        current_info = {}
         current_y = 0
         rounded_x = 1
         total_remaining = len(code_points)
@@ -74,12 +124,12 @@ class BDF(GlyphCache):
                 desired_character = False
             elif line.startswith(b"BBX"):
                 if desired_character:
-                    _, x, y, dx, dy = line.split()
+                    _, x, y, x_offset, y_offset = line.split()
                     x = int(x)
                     y = int(y)
-                    dx = int(dx)
-                    dy = int(dy)
-                    current_info["bounds"] = (x, y, dx, dy)
+                    x_offset = int(x_offset)
+                    y_offset = int(y_offset)
+                    current_info["bounds"] = (x, y, x_offset, y_offset)
                     current_info["bitmap"] = self.bitmap_class(x, y, 2)
             elif line.startswith(b"BITMAP"):
                 if desired_character:
@@ -114,7 +164,7 @@ class BDF(GlyphCache):
                     x = 0
                     for i in range(rounded_x):
                         val = (bits >> ((rounded_x-i-1)*8)) & 0xFF
-                        for j in range(7,-1,-1):
+                        for j in range(7, -1, -1):
                             if x >= width:
                                 break
                             bit = 0
