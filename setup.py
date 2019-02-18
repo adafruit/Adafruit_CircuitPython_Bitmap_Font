@@ -22,7 +22,7 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
 
-    description='Loads bitmap fonts into CircuitPython's displayio.',
+    description='Loads bitmap fonts into CircuitPython displayio.',
     long_description=long_description,
     long_description_content_type='text/x-rst',
 
