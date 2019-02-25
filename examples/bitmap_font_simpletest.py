@@ -3,8 +3,9 @@
 import os
 import sys
 
+sys.path.append(os.path.join(sys.path[0], ".."))
 from adafruit_bitmap_font import bitmap_font
-sys.path.append(os.path.join(sys.path[0], "test"))
+sys.path.append(os.path.join(sys.path[0], "../test"))
 font = bitmap_font.load_font(sys.argv[1])
 
 _, height, _, dy = font.get_bounding_box()
