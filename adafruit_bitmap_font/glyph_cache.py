@@ -54,6 +54,28 @@ class GlyphCache:
         """Loads displayio.Glyph objects into the GlyphCache from the font."""
         pass
 
+    def text_bounding_box(self, string, *, line_spacing=1.25):
+        """Calculate the (dx, dy, width, height) tuple of a string in the font.
+        This defines the bounding box with x, y offset from the font Baseline.
+        The box covers from Ascender line to Decender line of glyphs used."""
+        height = 0
+        right = bottom = 0
+        left = top = 0
+        lines = string.split('\n')
+        y = 0
+        for i, line in enumerate(lines):
+            x = 0
+            for char in line:
+                glyph = self.get_glyph(ord(char))
+                #print(char, ord(char), " -> ", glyph)
+                right = max(right, x+glyph.width)
+                if i == 0:   # first line, find the Ascender height
+                    top = min(top, -glyph.height)
+                bottom = max(bottom, y-glyph.dy)
+                x += glyph.shift_x
+            y += int(line_spacing * self.get_bounding_box()[1])
+        return (left, top, left+right, bottom-top)
+
     def get_glyph(self, code_point):
         """Returns a displayio.Glyph for the given code point or None is unsupported."""
         if code_point in self._glyphs:
