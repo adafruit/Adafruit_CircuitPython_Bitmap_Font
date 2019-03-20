@@ -40,7 +40,10 @@ Implementation Notes
 """
 
 import gc
-from displayio import Glyph
+try:
+    from displayio import Glyph
+except ImportError:
+    from fontio import Glyph
 from .glyph_cache import GlyphCache
 
 __version__ = "0.0.0-auto.0"

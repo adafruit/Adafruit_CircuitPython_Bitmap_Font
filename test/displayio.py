@@ -1,4 +1,3 @@
-import collections
 
 class Bitmap:
     def __init__(self, width, height, color_count):
@@ -20,5 +19,3 @@ class Bitmap:
 
     def __len__(self):
         return self.width * self.height
-
-Glyph = collections.namedtuple("Glyph", ["bitmap", "tile_index", "width", "height", "dx", "dy", "shift_x", "shift_y"])
