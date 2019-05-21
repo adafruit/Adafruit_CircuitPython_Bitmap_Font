@@ -94,9 +94,9 @@ class BDF(GlyphCache):
             remaining.add(code_points)
         else:
             remaining = set(code_points)
-        for cp in remaining:
-            if cp in self._glyphs and self._glyphs[cp]:
-                remaining.remove(cp)
+        for code_point in remaining:
+            if code_point in self._glyphs and self._glyphs[code_point]:
+                remaining.remove(code_point)
         if not remaining:
             return
 
