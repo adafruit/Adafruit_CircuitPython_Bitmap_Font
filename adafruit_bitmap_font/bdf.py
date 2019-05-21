@@ -89,7 +89,16 @@ class BDF(GlyphCache):
         current_info = {}
         current_y = 0
         rounded_x = 1
-        total_remaining = len(code_points)
+        if isinstance(code_points, int):
+            remaining = set()
+            remaining.add(code_points)
+        else:
+            remaining = set(code_points)
+        for cp in remaining:
+            if cp in self._glyphs and self._glyphs[cp]:
+                remaining.remove(cp)
+        if not remaining:
+            return
 
         x, _, _, _ = self.get_bounding_box()
 
@@ -113,6 +122,7 @@ class BDF(GlyphCache):
                 if desired_character:
                     bounds = current_info["bounds"]
                     shift = current_info["shift"]
+                    gc.collect()
                     self._glyphs[code_point] = Glyph(current_info["bitmap"],
                                                      0,
                                                      bounds[0],
@@ -121,8 +131,8 @@ class BDF(GlyphCache):
                                                      bounds[3],
                                                      shift[0],
                                                      shift[1])
-                    gc.collect()
-                    if total_remaining == 0:
+                    remaining.remove(code_point)
+                    if not remaining:
                         return
                 desired_character = False
             elif line.startswith(b"BBX"):
@@ -146,11 +156,9 @@ class BDF(GlyphCache):
             elif line.startswith(b"ENCODING"):
                 _, code_point = line.split()
                 code_point = int(code_point)
-                if code_point == code_points or code_point in code_points:
-                    total_remaining -= 1
-                    if code_point not in self._glyphs or not self._glyphs[code_point]:
-                        desired_character = True
-                        current_info = {"bitmap": None, "bounds": None, "shift": None}
+                if code_point in remaining:
+                    desired_character = True
+                    current_info = {"bitmap": None, "bounds": None, "shift": None}
             elif line.startswith(b"DWIDTH"):
                 if desired_character:
                     _, shift_x, shift_y = line.split()
