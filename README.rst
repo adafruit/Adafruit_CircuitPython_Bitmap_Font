@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.svg?branch=master
-    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_Bitmap_Font
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font/actions/
     :alt: Build Status
 
 Loads bitmap fonts into CircuitPython's displayio. BDF files are well supported. PCF and TTF
