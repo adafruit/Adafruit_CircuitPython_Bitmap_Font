@@ -92,6 +92,10 @@ class BDF(GlyphCache):
         if isinstance(code_points, int):
             remaining = set()
             remaining.add(code_points)
+        elif isinstance(code_points, str):
+            remaining = set(code_points.encode("utf-8"))
+        elif isinstance(code_points, set):
+            remaining = code_points
         else:
             remaining = set(code_points)
         for code_point in remaining:
