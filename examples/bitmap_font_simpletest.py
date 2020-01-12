@@ -4,9 +4,8 @@ import os
 import sys
 
 # Add paths so this runs in CPython in-place.
-# pylint: disable=wrong-import-order
 sys.path.append(os.path.join(sys.path[0], ".."))
-from adafruit_bitmap_font import bitmap_font
+from adafruit_bitmap_font import bitmap_font  # pylint: disable=wrong-import-position
 sys.path.append(os.path.join(sys.path[0], "../test"))
 font = bitmap_font.load_font(sys.argv[1])
 
