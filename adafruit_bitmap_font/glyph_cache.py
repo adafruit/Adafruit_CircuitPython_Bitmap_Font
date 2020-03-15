@@ -47,12 +47,12 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
 
 class GlyphCache:
     """Caches glyphs loaded by a subclass."""
+
     def __init__(self):
         self._glyphs = {}
 
     def load_glyphs(self, code_points):
         """Loads displayio.Glyph objects into the GlyphCache from the font."""
-        pass
 
     def get_glyph(self, code_point):
         """Returns a displayio.Glyph for the given code point or None is unsupported."""

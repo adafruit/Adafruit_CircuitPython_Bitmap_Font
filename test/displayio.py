@@ -1,4 +1,3 @@
-
 class Bitmap:
     def __init__(self, width, height, color_count):
         self.width = width
