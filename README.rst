@@ -2,7 +2,7 @@ Introduction
 ============
 
 .. image:: https://readthedocs.org/projects/adafruit-circuitpython-bitmap_font/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/bitmap_font/en/latest/
+    :target: https://circuitpython.readthedocs.io/projects/bitmap-font/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
