@@ -23,3 +23,6 @@ text_area.y = 20
 
 # Show it
 display.show(text_area)
+
+while True:
+    pass
