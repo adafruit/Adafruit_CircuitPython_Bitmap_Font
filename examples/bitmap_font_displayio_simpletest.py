@@ -8,8 +8,8 @@ bitmap with pixels matching glyphs from a given String
 
 
 import board
-from adafruit_bitmap_font import bitmap_font  # pylint: disable=wrong-import-position
 import displayio
+from adafruit_bitmap_font import bitmap_font
 
 font = bitmap_font.load_font("fonts/Arial-16.bdf")
 
