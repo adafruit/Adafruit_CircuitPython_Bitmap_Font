@@ -4,8 +4,8 @@ loaded by adafruit_bitmap_font
 """
 
 import board
-from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text import label
+from adafruit_bitmap_font import bitmap_font
 
 display = board.DISPLAY
 
