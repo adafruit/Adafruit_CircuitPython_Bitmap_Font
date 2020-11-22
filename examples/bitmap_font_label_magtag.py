@@ -12,6 +12,7 @@ from adafruit_bitmap_font import bitmap_font
 # see guide for setting up external displays (TFT / OLED breakouts, RGB matrices, etc.)
 # https://learn.adafruit.com/circuitpython-display-support-using-displayio/display-and-display-bus
 display = board.DISPLAY
+# wait until we can refresh the display
 time.sleep(display.time_to_refresh)
 
 # Set text, font, and color
@@ -36,7 +37,7 @@ text_area.line_spacing = 1.0
 text_area.x = 20
 text_area.y = 20
 
-# Show it
+# Show it and refresh
 display.show(text_area)
 display.refresh()
 while True:
