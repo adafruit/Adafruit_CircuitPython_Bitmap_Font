@@ -63,6 +63,41 @@ class BDF(GlyphCache):
         self.point_size = None
         self.x_resolution = None
         self.y_resolution = None
+        self._ascent = None
+        self._descent = None
+
+    @property
+    def descent(self):
+        """The number of pixels below the baseline of a typical descender"""
+        if self._descent is None:
+            self.file.seek(0)
+            while True:
+                line = self.file.readline()
+                if not line:
+                    break
+
+                if line.startswith(b"FONT_DESCENT "):
+                    self._descent = int(line.split()[1])
+                    break
+
+        return self._descent
+
+    @property
+    def ascent(self):
+        """The number of pixels above the baseline of a typical ascender"""
+        if self._ascent is None:
+            self.file.seek(0)
+            while True:
+                line = self.file.readline()
+                line = str(line, "utf-8")
+                if not line:
+                    break
+
+                if line.startswith("FONT_ASCENT "):
+                    self._ascent = int(line.split()[1])
+                    break
+
+        return self._ascent
 
     def get_bounding_box(self):
         """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
