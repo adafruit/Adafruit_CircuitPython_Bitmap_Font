@@ -57,8 +57,7 @@ class BDF(GlyphCache):
         self.file.seek(0)
         self.bitmap_class = bitmap_class
         line = self.file.readline()
-        line = str(line, "utf-8")
-        if not line or not line.startswith("STARTFONT 2.1"):
+        if not line or not line.startswith(b"STARTFONT 2.1"):
             raise ValueError("Unsupported file version")
         self.point_size = None
         self.x_resolution = None
@@ -89,11 +88,10 @@ class BDF(GlyphCache):
             self.file.seek(0)
             while True:
                 line = self.file.readline()
-                line = str(line, "utf-8")
                 if not line:
                     break
 
-                if line.startswith("FONT_ASCENT "):
+                if line.startswith(b"FONT_ASCENT "):
                     self._ascent = int(line.split()[1])
                     break
 
@@ -104,25 +102,23 @@ class BDF(GlyphCache):
         self.file.seek(0)
         while True:
             line = self.file.readline()
-            line = str(line, "utf-8")
             if not line:
                 break
 
-            if line.startswith("FONTBOUNDINGBOX "):
+            if line.startswith(b"FONTBOUNDINGBOX "):
                 _, x, y, x_offset, y_offset = line.split()
                 return (int(x), int(y), int(x_offset), int(y_offset))
         return None
 
+    def _read_to(self, prefix):
+        _readline = self.file.readline
+        while True:
+            line = _readline()
+            if not line or line.startswith(prefix):
+                return line
+
     def load_glyphs(self, code_points):
         # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
-        metadata = True
-        character = False
-        code_point = None
-        bytes_per_row = 1
-        desired_character = False
-        current_info = {}
-        current_y = 0
-        rounded_x = 1
         if isinstance(code_points, int):
             remaining = set()
             remaining.add(code_points)
@@ -138,92 +134,55 @@ class BDF(GlyphCache):
         if not remaining:
             return
 
-        x, _, _, _ = self.get_bounding_box()
+        _readline = self.file.readline
+        _read = self.file.read
 
         self.file.seek(0)
-        while True:
-            line = self.file.readline()
+        _, point_size, x_resolution, y_resolution = self._read_to(b"SIZE ").split()
+        self.point_size = int(point_size)
+        self.x_resolution = int(x_resolution)
+        self.y_resolution = int(y_resolution)
+
+        while remaining:
+            line = self._read_to(b"ENCODING ")
             if not line:
                 break
-            if line.startswith(b"CHARS "):
-                metadata = False
-            elif line.startswith(b"SIZE"):
-                _, self.point_size, self.x_resolution, self.y_resolution = line.split()
-            elif line.startswith(b"COMMENT"):
-                pass
-            elif line.startswith(b"STARTCHAR"):
-                # print(lineno, line.strip())
-                # _, character_name = line.split()
-                character = True
-            elif line.startswith(b"ENDCHAR"):
-                character = False
-                if desired_character:
-                    bounds = current_info["bounds"]
-                    shift = current_info["shift"]
-                    gc.collect()
-                    self._glyphs[code_point] = Glyph(
-                        current_info["bitmap"],
-                        0,
-                        bounds[0],
-                        bounds[1],
-                        bounds[2],
-                        bounds[3],
-                        shift[0],
-                        shift[1],
-                    )
-                    remaining.remove(code_point)
-                    if not remaining:
-                        return
-                desired_character = False
-            elif line.startswith(b"BBX"):
-                if desired_character:
-                    _, x, y, x_offset, y_offset = line.split()
-                    x = int(x)
-                    y = int(y)
-                    x_offset = int(x_offset)
-                    y_offset = int(y_offset)
-                    current_info["bounds"] = (x, y, x_offset, y_offset)
-                    current_info["bitmap"] = self.bitmap_class(x, y, 2)
-            elif line.startswith(b"BITMAP"):
-                if desired_character:
-                    rounded_x = x // 8
-                    if x % 8 > 0:
-                        rounded_x += 1
-                    bytes_per_row = rounded_x
-                    if bytes_per_row % 4 > 0:
-                        bytes_per_row += 4 - bytes_per_row % 4
-                    current_y = 0
-            elif line.startswith(b"ENCODING"):
-                _, code_point = line.split()
-                code_point = int(code_point)
-                if code_point in remaining:
-                    desired_character = True
-                    current_info = {"bitmap": None, "bounds": None, "shift": None}
-            elif line.startswith(b"DWIDTH"):
-                if desired_character:
-                    _, shift_x, shift_y = line.split()
-                    shift_x = int(shift_x)
-                    shift_y = int(shift_y)
-                    current_info["shift"] = (shift_x, shift_y)
-            elif line.startswith(b"SWIDTH"):
-                pass
-            elif character:
-                if desired_character:
-                    bits = int(line.strip(), 16)
-                    width = current_info["bounds"][0]
-                    start = current_y * width
-                    x = 0
-                    for i in range(rounded_x):
-                        val = (bits >> ((rounded_x - i - 1) * 8)) & 0xFF
-                        for j in range(7, -1, -1):
-                            if x >= width:
-                                break
-                            bit = 0
-                            if val & (1 << j) != 0:
-                                bit = 1
-                            current_info["bitmap"][start + x] = bit
-                            x += 1
-                    current_y += 1
-            elif metadata:
-                # print(lineno, line.strip())
-                pass
+
+            _, code_point = line.split()
+            code_point = int(code_point)
+            if code_point not in remaining:
+                continue
+
+            line = self._read_to(b"DWIDTH ")
+            _, shift_x, shift_y = line.split()
+            shift_x = int(shift_x)
+            shift_y = int(shift_y)
+
+            line = self._read_to(b"BBX ")
+            _, x, y, x_offset, y_offset = line.split()
+            x = int(x)
+            y = int(y)
+            x_offset = int(x_offset)
+            y_offset = int(y_offset)
+
+            line = self._read_to(b"BITMAP")
+
+            bitmap = self.bitmap_class(x, y, 2)
+            start = 0
+            for _ in range(y):
+                idx = 0
+                for idx in range(x):
+                    if idx % 4 == 0:
+                        value = int(_read(1), 16)
+                    if value & 8:
+                        bitmap[start + idx] = 1
+                    value <<= 1
+                _readline()
+                start += x
+
+            gc.collect()
+            self._glyphs[code_point] = Glyph(
+                bitmap, 0, x, y, x_offset, y_offset, shift_x, shift_y
+            )
+
+            remaining.remove(code_point)
