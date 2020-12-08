@@ -9,5 +9,4 @@ bundles
 .eggs
 dist
 **/*.egg-info
-*.pcf
 *.ttf
