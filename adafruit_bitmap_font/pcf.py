@@ -123,7 +123,7 @@ class PCF(GlyphCache):
 
         bitmap_format = self.tables[_PCF_BITMAPS].format
         if bitmap_format != 0xE:
-            raise NotImplementedError(f"Unsupported format_ {bitmap_format:x}")
+            raise NotImplementedError("Unsupported format %s" % bitmap_format)
 
         self._accel = self._read_accelerator_tables()
         self._encoding = self._read_encoding_table()
