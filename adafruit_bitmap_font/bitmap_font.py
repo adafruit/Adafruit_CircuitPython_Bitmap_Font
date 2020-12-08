@@ -65,4 +65,4 @@ def load_font(filename, bitmap=None):
 
         return ttf.TTF(font_file, bitmap)
 
-    raise ValueError(f"Unknown magic number {first_four}")
+    raise ValueError("Unknown magic number %r" % first_four)
