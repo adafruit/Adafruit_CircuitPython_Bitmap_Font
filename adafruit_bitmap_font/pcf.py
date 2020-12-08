@@ -1,10 +1,50 @@
+# The MIT License (MIT)
+#
+# Copyright © 2020 Jeff Epler for Adafruit Industries LLC
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+"""
+`adafruit_bitmap_font.pcf`
+====================================================
+
+Loads PCF format fonts.
+
+* Author(s): Jeff Epler
+
+Implementation Notes
+--------------------
+
+**Hardware:**
+
+**Software and Dependencies:**
+
+* Adafruit CircuitPython firmware for the supported boards:
+  https://github.com/adafruit/circuitpython/releases
+
+"""
+
 from collections import namedtuple
 import gc
-
-from .glyph_cache import GlyphCache
-from fontio import Glyph
-import displayio
 import struct
+
+from fontio import Glyph
+from .glyph_cache import GlyphCache
 
 _PCF_PROPERTIES = 1 << 0
 _PCF_ACCELERATORS = 1 << 1
@@ -66,6 +106,8 @@ Bitmap = namedtuple("Bitmap", ("glyph_count", "bitmap_sizes"))
 
 
 class PCF(GlyphCache):
+    """Loads glyphs from a PCF file in the given bitmap_class."""
+
     def __init__(self, f, bitmap_class):
         super().__init__()
         self.file = f
@@ -73,22 +115,22 @@ class PCF(GlyphCache):
         f.seek(0)
         self.buffer = bytearray(1)
         self.bitmap_class = bitmap_class
-        header, table_count = self.read("<4sI")
+        _, table_count = self._read("<4sI")
         self.tables = {}
         for _ in range(table_count):
-            type, format, size, offset = self.read("<IIII")
-            self.tables[type] = Table(format, size, offset)
+            type_, format_, size, offset = self._read("<IIII")
+            self.tables[type_] = Table(format_, size, offset)
 
         bitmap_format = self.tables[_PCF_BITMAPS].format
         if bitmap_format != 0xE:
-            raise NotImplementedError(f"Unsupported format {bitmap_format:x}")
+            raise NotImplementedError(f"Unsupported format_ {bitmap_format:x}")
 
-        self._accel = self.read_accelerator_tables()
-        self._encoding = self.read_encoding_table()
-        self._bitmaps = self.read_bitmap_table()
+        self._accel = self._read_accelerator_tables()
+        self._encoding = self._read_encoding_table()
+        self._bitmaps = self._read_bitmap_table()
 
-        self.ascent = self._accel.font_ascent
-        self.descent = self._accel.font_descent
+        self._ascent = self._accel.font_ascent
+        self._descent = self._accel.font_descent
 
         minbounds = self._accel.ink_minbounds
         maxbounds = self._accel.ink_maxbounds
@@ -102,41 +144,52 @@ class PCF(GlyphCache):
             -maxbounds.character_descent,
         )
 
+    @property
+    def ascent(self):
+        """The number of pixels above the baseline of a typical ascender"""
+        return self._ascent
+
+    @property
+    def descent(self):
+        """The number of pixels below the baseline of a typical descender"""
+        return self._descent
+
     def get_bounding_box(self):
+        """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
         return self._bounding_box
 
-    def read(self, format):
-        s = struct.calcsize(format)
-        if s != len(self.buffer):
-            self.buffer = bytearray(s)
+    def _read(self, format_):
+        size = struct.calcsize(format_)
+        if size != len(self.buffer):
+            self.buffer = bytearray(size)
         self.file.readinto(self.buffer)
-        return struct.unpack_from(format, self.buffer)
+        return struct.unpack_from(format_, self.buffer)
 
-    def seek_table(self, table):
+    def _seek_table(self, table):
         self.file.seek(table.offset)
-        (format,) = self.read("<I")
+        (format_,) = self._read("<I")
 
-        if format & _PCF_BYTE_MASK == 0:
+        if format_ & _PCF_BYTE_MASK == 0:
             raise RuntimeError("Only big endian supported")
 
-        return format
+        return format_
 
-    def read_encoding_table(self):
+    def _read_encoding_table(self):
         encoding = self.tables[_PCF_BDF_ENCODINGS]
-        self.seek_table(encoding)
+        self._seek_table(encoding)
 
-        return Encoding(*self.read(">hhhhh"))
+        return Encoding(*self._read(">hhhhh"))
 
-    def read_bitmap_table(self):
+    def _read_bitmap_table(self):
         bitmaps = self.tables[_PCF_BITMAPS]
-        format = self.seek_table(bitmaps)
+        format_ = self._seek_table(bitmaps)
 
-        (glyph_count,) = self.read(">I")
+        (glyph_count,) = self._read(">I")
         self.file.seek(bitmaps.offset + 8 + 4 * glyph_count)
-        bitmap_sizes = self.read(">4I")
-        return Bitmap(glyph_count, bitmap_sizes[format & 3])
+        bitmap_sizes = self._read(">4I")
+        return Bitmap(glyph_count, bitmap_sizes[format_ & 3])
 
-    def read_metrics(self, compressed_metrics):
+    def _read_metrics(self, compressed_metrics):
         if compressed_metrics:
             (
                 left_side_bearing,
@@ -144,7 +197,7 @@ class PCF(GlyphCache):
                 character_width,
                 character_ascent,
                 character_descent,
-            ) = self.read("5B")
+            ) = self._read("5B")
             left_side_bearing -= 0x80
             right_side_bearing -= 0x80
             character_width -= 0x80
@@ -159,7 +212,7 @@ class PCF(GlyphCache):
                 character_ascent,
                 character_descent,
                 attributes,
-            ) = self.read(">5hH")
+            ) = self._read(">5hH")
         return Metrics(
             left_side_bearing,
             right_side_bearing,
@@ -169,17 +222,18 @@ class PCF(GlyphCache):
             attributes,
         )
 
-    def read_accelerator_tables(self):
+    def _read_accelerator_tables(self):
+        # pylint: disable=too-many-locals
         accelerators = self.tables.get(_PCF_BDF_ACCELERATORS)
         if not accelerators:
             accelerators = self.tables.get(_PCF_ACCELERATORS)
         if not accelerators:
             raise RuntimeError("Accelerator table missing")
 
-        format = self.seek_table(accelerators)
+        format_ = self._seek_table(accelerators)
 
-        has_inkbounds = format & _PCF_ACCEL_W_INKBOUNDS
-        compressed_metrics = False  # format & _PCF_COMPRESSED_METRICS
+        has_inkbounds = format_ & _PCF_ACCEL_W_INKBOUNDS
+        compressed_metrics = False  # format_ & _PCF_COMPRESSED_METRICS
 
         (
             no_overlap,
@@ -193,12 +247,12 @@ class PCF(GlyphCache):
             font_ascent,
             font_descent,
             max_overlap,
-        ) = self.read(">BBBBBBBBIII")
-        minbounds = self.read_metrics(compressed_metrics)
-        maxbounds = self.read_metrics(compressed_metrics)
+        ) = self._read(">BBBBBBBBIII")
+        minbounds = self._read_metrics(compressed_metrics)
+        maxbounds = self._read_metrics(compressed_metrics)
         if has_inkbounds:
-            ink_minbounds = self.read_metrics(compressed_metrics)
-            ink_maxbounds = self.read_metrics(compressed_metrics)
+            ink_minbounds = self._read_metrics(compressed_metrics)
+            ink_maxbounds = self._read_metrics(compressed_metrics)
         else:
             ink_minbounds = minbounds
             ink_maxbounds = maxbounds
@@ -220,33 +274,33 @@ class PCF(GlyphCache):
             ink_maxbounds,
         )
 
-    def read_properties(self):
+    def _read_properties(self):
         property_table_offset = self.tables[_PCF_PROPERTIES]["offset"]
         self.file.seek(property_table_offset)
-        (format,) = self.read("<I")
+        (format_,) = self._read("<I")
 
-        if format & _PCF_BYTE_MASK == 0:
+        if format_ & _PCF_BYTE_MASK == 0:
             raise RuntimeError("Only big endian supported")
-        (nprops,) = self.read(">I")
+        (nprops,) = self._read(">I")
         self.file.seek(property_table_offset + 8 + 9 * nprops)
 
         pos = self.file.tell()
         if pos % 4 > 0:
             self.file.read(4 - pos % 4)
-        (string_size,) = self.read(">I")
+        (string_size,) = self._read(">I")
 
         strings = self.file.read(string_size)
         string_map = {}
         i = 0
-        for s in strings.split(b"\x00"):
-            string_map[i] = s
-            i += len(s) + 1
+        for value in strings.split(b"\x00"):
+            string_map[i] = value
+            i += len(value) + 1
 
         self.file.seek(property_table_offset + 8)
         for _ in range(nprops):
-            name_offset, isStringProp, value = self.read(">IBI")
+            name_offset, is_string_prop, value = self._read(">IBI")
 
-            if isStringProp:
+            if is_string_prop:
                 yield (string_map[name_offset], string_map[value])
             else:
                 yield (string_map[name_offset], value)
@@ -295,7 +349,7 @@ class PCF(GlyphCache):
                 - self._encoding.min_byte2
             )
             self.file.seek(indices_offset + 2 * encoding_idx)
-            (glyph_idx,) = self.read(">H")
+            (glyph_idx,) = self._read(">H")
             if glyph_idx != 65535:
                 indices[i] = glyph_idx
 
@@ -305,24 +359,23 @@ class PCF(GlyphCache):
             if index is None:
                 continue
             self.file.seek(first_metric_offset + metrics_size * index)
-            all_metrics[i] = self.read_metrics(metrics_compressed)
+            all_metrics[i] = self._read_metrics(metrics_compressed)
         bitmap_offsets = [None] * len(code_points)
         for i, code_point in enumerate(code_points):
             index = indices[i]
             if index is None:
                 continue
             self.file.seek(bitmap_offset_offsets + 4 * index)
-            (bitmap_offset,) = self.read(">I")
+            (bitmap_offset,) = self._read(">I")
             bitmap_offsets[i] = bitmap_offset
 
         # Batch creation of glyphs and bitmaps so that we need only gc.collect
         # once
         gc.collect()
         bitmaps = [None] * len(code_points)
-        for i in range(len(all_metrics)):
+        for i in range(len(all_metrics)):  # pylint: disable=consider-using-enumerate
             metrics = all_metrics[i]
             if metrics is not None:
-                shift = metrics.character_width
                 width = metrics.right_side_bearing - metrics.left_side_bearing
                 height = metrics.character_ascent + metrics.character_descent
                 bitmap = bitmaps[i] = self.bitmap_class(width, height, 2)
@@ -342,7 +395,6 @@ class PCF(GlyphCache):
             if metrics is None:
                 continue
             self.file.seek(first_bitmap_offset + bitmap_offsets[i])
-            shift = metrics.character_width
             width = metrics.right_side_bearing - metrics.left_side_bearing
             height = metrics.character_ascent + metrics.character_descent
 
@@ -350,9 +402,9 @@ class PCF(GlyphCache):
             words_per_row = (width + 31) // 32
             buf = bytearray(4 * words_per_row)
             start = 0
-            for i in range(height):
+            for _ in range(height):
                 self.file.readinto(buf)
-                for j in range(width):
-                    if buf[j // 8] & (128 >> (j % 8)):
-                        bitmap[start + j] = 1
+                for k in range(width):
+                    if buf[k // 8] & (128 >> (k % 8)):
+                        bitmap[start + k] = 1
                 start += width
