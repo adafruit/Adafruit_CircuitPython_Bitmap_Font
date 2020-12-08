@@ -9,10 +9,13 @@ from adafruit_bitmap_font import bitmap_font  # pylint: disable=wrong-import-pos
 
 sys.path.append(os.path.join(sys.path[0], "../test"))
 font = bitmap_font.load_font(sys.argv[1])
+specimen = "Adafruit CircuitPython" if len(sys.argv) == 2 else sys.argv[2]
 
 _, height, _, dy = font.get_bounding_box()
+font.load_glyphs(specimen)
+
 for y in range(height):
-    for c in "Adafruit CircuitPython":
+    for c in specimen:
         glyph = font.get_glyph(ord(c))
         if not glyph:
             continue
