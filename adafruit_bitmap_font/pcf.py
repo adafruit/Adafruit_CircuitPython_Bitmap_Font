@@ -297,7 +297,8 @@ class PCF(GlyphCache):
             )
             self.file.seek(indices_offset + 2 * encoding_idx)
             (glyph_idx,) = self.read(">H")
-            indices[i] = glyph_idx
+            if glyph_idx != 65535:
+                indices[i] = glyph_idx
 
         all_metrics = [None] * len(code_points)
         for i, code_point in enumerate(code_points):
