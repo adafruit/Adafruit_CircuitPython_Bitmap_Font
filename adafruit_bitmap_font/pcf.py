@@ -71,6 +71,7 @@ class PCF(GlyphCache):
         self.file = f
         self.name = f
         f.seek(0)
+        self.buffer = bytearray(1)
         self.bitmap_class = bitmap_class
         header, table_count = self.read("<4sI")
         self.tables = {}
@@ -106,7 +107,10 @@ class PCF(GlyphCache):
 
     def read(self, format):
         s = struct.calcsize(format)
-        return struct.unpack_from(format, self.file.read(s))
+        if s != len(self.buffer):
+            self.buffer = bytearray(s)
+        self.file.readinto(self.buffer)
+        return struct.unpack_from(format, self.buffer)
 
     def seek_table(self, table):
         self.file.seek(table.offset)
@@ -116,10 +120,6 @@ class PCF(GlyphCache):
             raise RuntimeError("Only big endian supported")
 
         return format
-
-    def seek_glyph(self, idx):
-        encoding = self.tables[_PCF_BDF_ENCODINGS]
-        self.seek_table(encoding)
 
     def read_encoding_table(self):
         encoding = self.tables[_PCF_BDF_ENCODINGS]
@@ -261,7 +261,6 @@ class PCF(GlyphCache):
         code_points = sorted(
             c for c in code_points if self._glyphs.get(c, None) is None
         )
-
         if not code_points:
             return
 
@@ -316,6 +315,28 @@ class PCF(GlyphCache):
             (bitmap_offset,) = self.read(">I")
             bitmap_offsets[i] = bitmap_offset
 
+        # Batch creation of glyphs and bitmaps so that we need only gc.collect
+        # once
+        gc.collect()
+        bitmaps = [None] * len(code_points)
+        for i in range(len(all_metrics)):
+            metrics = all_metrics[i]
+            if metrics is not None:
+                shift = metrics.character_width
+                width = metrics.right_side_bearing - metrics.left_side_bearing
+                height = metrics.character_ascent + metrics.character_descent
+                bitmap = bitmaps[i] = self.bitmap_class(width, height, 2)
+                self._glyphs[code_points[i]] = Glyph(
+                    bitmap,
+                    0,
+                    width,
+                    height,
+                    metrics.left_side_bearing,
+                    -metrics.character_descent,
+                    metrics.character_width,
+                    0,
+                )
+
         for i, code_point in enumerate(code_points):
             metrics = all_metrics[i]
             if metrics is None:
@@ -325,18 +346,7 @@ class PCF(GlyphCache):
             width = metrics.right_side_bearing - metrics.left_side_bearing
             height = metrics.character_ascent + metrics.character_descent
 
-            gc.collect()
-            bitmap = self.bitmap_class(width, height, 2)
-            self._glyphs[code_point] = Glyph(
-                bitmap,
-                0,
-                width,
-                height,
-                metrics.left_side_bearing,
-                -metrics.character_descent,
-                metrics.character_width,
-                0,
-            )
+            bitmap = bitmaps[i]
             words_per_row = (width + 31) // 32
             buf = bytearray(4 * words_per_row)
             start = 0
