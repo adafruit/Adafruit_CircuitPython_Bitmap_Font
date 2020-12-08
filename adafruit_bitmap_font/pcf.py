@@ -29,13 +29,41 @@ _PCF_SCAN_UNIT_MASK = 3 << 4
 # https://fontforge.org/docs/techref/pcf-format.html
 
 Table = namedtuple("Table", ("format", "size", "offset"))
-Metrics = namedtuple("Metrics", ("left_side_bearing", "right_side_bearing", "character_width", "character_ascent", "character_descent", "character_attributes"))
-Accelerators = namedtuple("Accelerators", (
-    "no_overlap", "constant_metrics", "terminal_font", "constant_width",
-    "ink_inside", "ink_metrics", "draw_direction", "font_ascent", "font_descent", "max_overlap", "minbounds", "maxbounds", "ink_minbounds", "ink_maxbounds"))
-Encoding = namedtuple("Encoding", (
-    "min_byte2", "max_byte2", "min_byte1", "max_byte1", "default_char"))
+Metrics = namedtuple(
+    "Metrics",
+    (
+        "left_side_bearing",
+        "right_side_bearing",
+        "character_width",
+        "character_ascent",
+        "character_descent",
+        "character_attributes",
+    ),
+)
+Accelerators = namedtuple(
+    "Accelerators",
+    (
+        "no_overlap",
+        "constant_metrics",
+        "terminal_font",
+        "constant_width",
+        "ink_inside",
+        "ink_metrics",
+        "draw_direction",
+        "font_ascent",
+        "font_descent",
+        "max_overlap",
+        "minbounds",
+        "maxbounds",
+        "ink_minbounds",
+        "ink_maxbounds",
+    ),
+)
+Encoding = namedtuple(
+    "Encoding", ("min_byte2", "max_byte2", "min_byte1", "max_byte1", "default_char")
+)
 Bitmap = namedtuple("Bitmap", ("glyph_count", "bitmap_sizes"))
+
 
 class PCF(GlyphCache):
     def __init__(self, f, bitmap_class):
@@ -51,7 +79,7 @@ class PCF(GlyphCache):
             self.tables[type] = Table(format, size, offset)
 
         bitmap_format = self.tables[_PCF_BITMAPS].format
-        if bitmap_format != 0xe:
+        if bitmap_format != 0xE:
             raise NotImplementedError(f"Unsupported format {bitmap_format:x}")
 
         self._accel = self.read_accelerator_tables()
@@ -66,7 +94,12 @@ class PCF(GlyphCache):
         width = maxbounds.right_side_bearing - minbounds.left_side_bearing
         height = maxbounds.character_ascent + maxbounds.character_descent
 
-        self._bounding_box = width, height, minbounds.left_side_bearing, -maxbounds.character_descent
+        self._bounding_box = (
+            width,
+            height,
+            minbounds.left_side_bearing,
+            -maxbounds.character_descent,
+        )
 
     def get_bounding_box(self):
         return self._bounding_box
@@ -81,7 +114,7 @@ class PCF(GlyphCache):
 
         if format & _PCF_BYTE_MASK == 0:
             raise RuntimeError("Only big endian supported")
-        
+
         return format
 
     def seek_glyph(self, idx):
@@ -98,14 +131,20 @@ class PCF(GlyphCache):
         bitmaps = self.tables[_PCF_BITMAPS]
         format = self.seek_table(bitmaps)
 
-        glyph_count, = self.read(">I")
+        (glyph_count,) = self.read(">I")
         self.file.seek(bitmaps.offset + 8 + 4 * glyph_count)
         bitmap_sizes = self.read(">4I")
         return Bitmap(glyph_count, bitmap_sizes[format & 3])
 
     def read_metrics(self, compressed_metrics):
         if compressed_metrics:
-            left_side_bearing, right_side_bearing, character_width, character_ascent, character_descent = self.read("5B")
+            (
+                left_side_bearing,
+                right_side_bearing,
+                character_width,
+                character_ascent,
+                character_descent,
+            ) = self.read("5B")
             left_side_bearing -= 0x80
             right_side_bearing -= 0x80
             character_width -= 0x80
@@ -113,8 +152,22 @@ class PCF(GlyphCache):
             character_descent -= 0x80
             attributes = 0
         else:
-            left_side_bearing, right_side_bearing, character_width, character_ascent, character_descent, attributes = self.read(">5hH")
-        return Metrics(left_side_bearing, right_side_bearing, character_width, character_ascent, character_descent, attributes)
+            (
+                left_side_bearing,
+                right_side_bearing,
+                character_width,
+                character_ascent,
+                character_descent,
+                attributes,
+            ) = self.read(">5hH")
+        return Metrics(
+            left_side_bearing,
+            right_side_bearing,
+            character_width,
+            character_ascent,
+            character_descent,
+            attributes,
+        )
 
     def read_accelerator_tables(self):
         accelerators = self.tables.get(_PCF_BDF_ACCELERATORS)
@@ -126,21 +179,47 @@ class PCF(GlyphCache):
         format = self.seek_table(accelerators)
 
         has_inkbounds = format & _PCF_ACCEL_W_INKBOUNDS
-        compressed_metrics = False # format & _PCF_COMPRESSED_METRICS
+        compressed_metrics = False  # format & _PCF_COMPRESSED_METRICS
 
-        (no_overlap, constant_metrics, terminal_font, constant_width, ink_inside, ink_metrics, draw_direction, _, font_ascent, font_descent, max_overlap) = self.read(">BBBBBBBBIII")
+        (
+            no_overlap,
+            constant_metrics,
+            terminal_font,
+            constant_width,
+            ink_inside,
+            ink_metrics,
+            draw_direction,
+            _,
+            font_ascent,
+            font_descent,
+            max_overlap,
+        ) = self.read(">BBBBBBBBIII")
         minbounds = self.read_metrics(compressed_metrics)
         maxbounds = self.read_metrics(compressed_metrics)
         if has_inkbounds:
             ink_minbounds = self.read_metrics(compressed_metrics)
             ink_maxbounds = self.read_metrics(compressed_metrics)
         else:
-            ink_minbounds = minbounds    
-            ink_maxbounds = maxbounds    
+            ink_minbounds = minbounds
+            ink_maxbounds = maxbounds
 
         return Accelerators(
-            no_overlap, constant_metrics, terminal_font, constant_width, ink_inside, ink_metrics, draw_direction, font_ascent, font_descent, max_overlap, minbounds, maxbounds, ink_minbounds, ink_maxbounds)
-        
+            no_overlap,
+            constant_metrics,
+            terminal_font,
+            constant_width,
+            ink_inside,
+            ink_metrics,
+            draw_direction,
+            font_ascent,
+            font_descent,
+            max_overlap,
+            minbounds,
+            maxbounds,
+            ink_minbounds,
+            ink_maxbounds,
+        )
+
     def read_properties(self):
         property_table_offset = self.tables[_PCF_PROPERTIES]["offset"]
         self.file.seek(property_table_offset)
@@ -172,8 +251,6 @@ class PCF(GlyphCache):
             else:
                 yield (string_map[name_offset], value)
 
-
-
     def load_glyphs(self, code_points):
         # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
         if isinstance(code_points, int):
@@ -181,16 +258,22 @@ class PCF(GlyphCache):
         elif isinstance(code_points, str):
             code_points = [ord(c) for c in code_points]
 
-        code_points = sorted(c for c in code_points if self._glyphs.get(c, None) is None)
+        code_points = sorted(
+            c for c in code_points if self._glyphs.get(c, None) is None
+        )
 
         if not code_points:
             return
 
         indices_offset = self.tables[_PCF_BDF_ENCODINGS].offset + 14
         bitmap_offset_offsets = self.tables[_PCF_BITMAPS].offset + 8
-        first_bitmap_offset = self.tables[_PCF_BITMAPS].offset + 4 * (6 + self._bitmaps.glyph_count)
+        first_bitmap_offset = self.tables[_PCF_BITMAPS].offset + 4 * (
+            6 + self._bitmaps.glyph_count
+        )
         metrics_compressed = self.tables[_PCF_METRICS].format & _PCF_COMPRESSED_METRICS
-        first_metric_offset = self.tables[_PCF_METRICS].offset + 6 if metrics_compressed else 8
+        first_metric_offset = (
+            self.tables[_PCF_METRICS].offset + 6 if metrics_compressed else 8
+        )
         metrics_size = 5 if metrics_compressed else 12
 
         # These will each _tend to be_ forward reads in the file, at least
@@ -198,51 +281,62 @@ class PCF(GlyphCache):
         # excess reads
         indices = [None] * len(code_points)
         for i, code_point in enumerate(code_points):
-            enc1 = (code_point >> 8) & 0xff
-            enc2 = code_point & 0xff
-            
+            enc1 = (code_point >> 8) & 0xFF
+            enc2 = code_point & 0xFF
+
             if enc1 < self._encoding.min_byte1 or enc1 >= self._encoding.max_byte1:
                 continue
             if enc2 < self._encoding.min_byte2 or enc2 >= self._encoding.max_byte2:
                 continue
 
-            encoding_idx = (enc1 - self._encoding.min_byte1) * (self._encoding.max_byte2 - self._encoding.min_byte2 + 1) + enc2 - self._encoding.min_byte2
+            encoding_idx = (
+                (enc1 - self._encoding.min_byte1)
+                * (self._encoding.max_byte2 - self._encoding.min_byte2 + 1)
+                + enc2
+                - self._encoding.min_byte2
+            )
             self.file.seek(indices_offset + 2 * encoding_idx)
-            glyph_idx, = self.read(">H")
+            (glyph_idx,) = self.read(">H")
             indices[i] = glyph_idx
 
         all_metrics = [None] * len(code_points)
         for i, code_point in enumerate(code_points):
             index = indices[i]
-            if index is None: continue
+            if index is None:
+                continue
             self.file.seek(first_metric_offset + metrics_size * index)
             all_metrics[i] = self.read_metrics(metrics_compressed)
         bitmap_offsets = [None] * len(code_points)
         for i, code_point in enumerate(code_points):
             index = indices[i]
-            if index is None: continue
+            if index is None:
+                continue
             self.file.seek(bitmap_offset_offsets + 4 * index)
-            bitmap_offset, = self.read(">I")
+            (bitmap_offset,) = self.read(">I")
             bitmap_offsets[i] = bitmap_offset
 
         for i, code_point in enumerate(code_points):
             metrics = all_metrics[i]
-            if metrics is None: continue
+            if metrics is None:
+                continue
             self.file.seek(first_bitmap_offset + bitmap_offsets[i])
             shift = metrics.character_width
             width = metrics.right_side_bearing - metrics.left_side_bearing
             height = metrics.character_ascent + metrics.character_descent
 
             gc.collect()
-            bitmap = self.bitmap_class(width, height , 2)
-            self._glyphs[code_point] = Glyph(bitmap, 0, 
-                        width,
-                        height,
-                        metrics.left_side_bearing,
-                        -metrics.character_descent,
-                        metrics.character_width,
-                        0)
-            words_per_row = ((width + 31) // 32)
+            bitmap = self.bitmap_class(width, height, 2)
+            self._glyphs[code_point] = Glyph(
+                bitmap,
+                0,
+                width,
+                height,
+                metrics.left_side_bearing,
+                -metrics.character_descent,
+                metrics.character_width,
+                0,
+            )
+            words_per_row = (width + 31) // 32
             buf = bytearray(4 * words_per_row)
             start = 0
             for i in range(height):
