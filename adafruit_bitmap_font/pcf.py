@@ -1,7 +1,8 @@
-# pylint: skip-file
-# Remove the above when PCF is actually supported.
+from collections import namedtuple
+import gc
 
 from .glyph_cache import GlyphCache
+from fontio import Glyph
 import displayio
 import struct
 
@@ -25,27 +26,122 @@ _PCF_BYTE_MASK = 1 << 2  # If set then Most Sig Byte First */
 _PCF_BIT_MASK = 1 << 3  # If set then Most Sig Bit First */
 _PCF_SCAN_UNIT_MASK = 3 << 4
 
-# https://fontforge.github.io/en-US/documentation/reference/pcf-format/
+# https://fontforge.org/docs/techref/pcf-format.html
 
+Table = namedtuple("Table", ("format", "size", "offset"))
+Metrics = namedtuple("Metrics", ("left_side_bearing", "right_side_bearing", "character_width", "character_ascent", "character_descent", "character_attributes"))
+Accelerators = namedtuple("Accelerators", (
+    "no_overlap", "constant_metrics", "terminal_font", "constant_width",
+    "ink_inside", "ink_metrics", "draw_direction", "font_ascent", "font_descent", "max_overlap", "minbounds", "maxbounds", "ink_minbounds", "ink_maxbounds"))
+Encoding = namedtuple("Encoding", (
+    "min_byte2", "max_byte2", "min_byte1", "max_byte1", "default_char"))
+Bitmap = namedtuple("Bitmap", ("glyph_count", "bitmap_sizes"))
 
 class PCF(GlyphCache):
-    def __init__(self, f):
+    def __init__(self, f, bitmap_class):
         super().__init__()
         self.file = f
         self.name = f
         f.seek(0)
+        self.bitmap_class = bitmap_class
         header, table_count = self.read("<4sI")
         self.tables = {}
         for _ in range(table_count):
             type, format, size, offset = self.read("<IIII")
-            self.tables[type] = {"format": format, "size": size, "offset": offset}
-            print(type)
+            self.tables[type] = Table(format, size, offset)
+
+        bitmap_format = self.tables[_PCF_BITMAPS].format
+        if bitmap_format != 0xe:
+            raise NotImplementedError(f"Unsupported format {bitmap_format:x}")
+
+        self._accel = self.read_accelerator_tables()
+        self._encoding = self.read_encoding_table()
+        self._bitmaps = self.read_bitmap_table()
+
+        self.ascent = self._accel.font_ascent
+        self.descent = self._accel.font_descent
+
+        minbounds = self._accel.ink_minbounds
+        maxbounds = self._accel.ink_maxbounds
+        width = maxbounds.right_side_bearing - minbounds.left_side_bearing
+        height = maxbounds.character_ascent + maxbounds.character_descent
+
+        self._bounding_box = width, height, minbounds.left_side_bearing, -maxbounds.character_descent
+
+    def get_bounding_box(self):
+        return self._bounding_box
 
     def read(self, format):
         s = struct.calcsize(format)
         return struct.unpack_from(format, self.file.read(s))
 
-    def get_bounding_box(self):
+    def seek_table(self, table):
+        self.file.seek(table.offset)
+        (format,) = self.read("<I")
+
+        if format & _PCF_BYTE_MASK == 0:
+            raise RuntimeError("Only big endian supported")
+        
+        return format
+
+    def seek_glyph(self, idx):
+        encoding = self.tables[_PCF_BDF_ENCODINGS]
+        self.seek_table(encoding)
+
+    def read_encoding_table(self):
+        encoding = self.tables[_PCF_BDF_ENCODINGS]
+        self.seek_table(encoding)
+
+        return Encoding(*self.read(">hhhhh"))
+
+    def read_bitmap_table(self):
+        bitmaps = self.tables[_PCF_BITMAPS]
+        format = self.seek_table(bitmaps)
+
+        glyph_count, = self.read(">I")
+        self.file.seek(bitmaps.offset + 8 + 4 * glyph_count)
+        bitmap_sizes = self.read(">4I")
+        return Bitmap(glyph_count, bitmap_sizes[format & 3])
+
+    def read_metrics(self, compressed_metrics):
+        if compressed_metrics:
+            left_side_bearing, right_side_bearing, character_width, character_ascent, character_descent = self.read("5B")
+            left_side_bearing -= 0x80
+            right_side_bearing -= 0x80
+            character_width -= 0x80
+            character_ascent -= 0x80
+            character_descent -= 0x80
+            attributes = 0
+        else:
+            left_side_bearing, right_side_bearing, character_width, character_ascent, character_descent, attributes = self.read(">5hH")
+        return Metrics(left_side_bearing, right_side_bearing, character_width, character_ascent, character_descent, attributes)
+
+    def read_accelerator_tables(self):
+        accelerators = self.tables.get(_PCF_BDF_ACCELERATORS)
+        if not accelerators:
+            accelerators = self.tables.get(_PCF_ACCELERATORS)
+        if not accelerators:
+            raise RuntimeError("Accelerator table missing")
+
+        format = self.seek_table(accelerators)
+
+        has_inkbounds = format & _PCF_ACCEL_W_INKBOUNDS
+        compressed_metrics = False # format & _PCF_COMPRESSED_METRICS
+
+        (no_overlap, constant_metrics, terminal_font, constant_width, ink_inside, ink_metrics, draw_direction, _, font_ascent, font_descent, max_overlap) = self.read(">BBBBBBBBIII")
+        minbounds = self.read_metrics(compressed_metrics)
+        maxbounds = self.read_metrics(compressed_metrics)
+        if has_inkbounds:
+            ink_minbounds = self.read_metrics(compressed_metrics)
+            ink_maxbounds = self.read_metrics(compressed_metrics)
+        else:
+            ink_minbounds = minbounds    
+            ink_maxbounds = maxbounds    
+
+        return Accelerators(
+            no_overlap, constant_metrics, terminal_font, constant_width, ink_inside, ink_metrics, draw_direction, font_ascent, font_descent, max_overlap, minbounds, maxbounds, ink_minbounds, ink_maxbounds)
+        
+    def read_properties(self):
         property_table_offset = self.tables[_PCF_PROPERTIES]["offset"]
         self.file.seek(property_table_offset)
         (format,) = self.read("<I")
@@ -72,92 +168,85 @@ class PCF(GlyphCache):
             name_offset, isStringProp, value = self.read(">IBI")
 
             if isStringProp:
-                print(string_map[name_offset], string_map[value])
+                yield (string_map[name_offset], string_map[value])
             else:
-                print(string_map[name_offset], value)
-        return None
+                yield (string_map[name_offset], value)
+
+
 
     def load_glyphs(self, code_points):
-        metadata = True
-        character = False
-        code_point = None
-        rounded_x = 1
-        bytes_per_row = 1
-        desired_character = False
-        current_info = None
-        current_y = 0
-        total_remaining = len(code_points)
+        # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
+        if isinstance(code_points, int):
+            code_points = (code_points,)
+        elif isinstance(code_points, str):
+            code_points = [ord(c) for c in code_points]
 
-        x, _, _, _ = self.get_bounding_box()
-        # create a scratch bytearray to load pixels into
-        scratch_row = memoryview(bytearray((((x - 1) // 32) + 1) * 4))
+        code_points = sorted(c for c in code_points if self._glyphs.get(c, None) is None)
 
-        self.file.seek(0)
-        while True:
-            line = self.file.readline()
-            if not line:
-                break
-            if line.startswith(b"CHARS "):
-                metadata = False
-            elif line.startswith(b"SIZE"):
-                _, self.point_size, self.x_resolution, self.y_resolution = line.split()
-            elif line.startswith(b"COMMENT"):
-                pass
-            elif line.startswith(b"STARTCHAR"):
-                # print(lineno, line.strip())
-                # _, character_name = line.split()
-                character = True
-            elif line.startswith(b"ENDCHAR"):
-                character = False
-                if desired_character:
-                    self._glyphs[code_point] = current_info
-                    if total_remaining == 0:
-                        return
-                desired_character = False
-            elif line.startswith(b"BBX"):
-                if desired_character:
-                    _, x, y, dx, dy = line.split()
-                    x = int(x)
-                    y = int(y)
-                    dx = int(dx)
-                    dy = int(dy)
-                    current_info["bounds"] = (x, y, dx, dy)
-                    current_info["bitmap"] = displayio.Bitmap(x, y, 2)
-            elif line.startswith(b"BITMAP"):
-                if desired_character:
-                    rounded_x = x // 8
-                    if x % 8 > 0:
-                        rounded_x += 1
-                    bytes_per_row = rounded_x
-                    if bytes_per_row % 4 > 0:
-                        bytes_per_row += 4 - bytes_per_row % 4
-                    current_y = 0
-            elif line.startswith(b"ENCODING"):
-                _, code_point = line.split()
-                code_point = int(code_point)
-                if code_point == code_points or code_point in code_points:
-                    total_remaining -= 1
-                    if code_point not in self._glyphs:
-                        desired_character = True
-                        current_info = {"bitmap": None, "bounds": None, "shift": None}
-            elif line.startswith(b"DWIDTH"):
-                if desired_character:
-                    _, shift_x, shift_y = line.split()
-                    shift_x = int(shift_x)
-                    shift_y = int(shift_y)
-                    current_info["shift"] = (shift_x, shift_y)
-            elif line.startswith(b"SWIDTH"):
-                pass
-            elif character:
-                if desired_character:
-                    bits = int(line.strip(), 16)
-                    for i in range(rounded_x):
-                        val = (bits >> ((rounded_x - i - 1) * 8)) & 0xFF
-                        scratch_row[i] = val
-                    current_info["bitmap"]._load_row(
-                        current_y, scratch_row[:bytes_per_row]
-                    )
-                    current_y += 1
-            elif metadata:
-                # print(lineno, line.strip())
-                pass
+        if not code_points:
+            return
+
+        indices_offset = self.tables[_PCF_BDF_ENCODINGS].offset + 14
+        bitmap_offset_offsets = self.tables[_PCF_BITMAPS].offset + 8
+        first_bitmap_offset = self.tables[_PCF_BITMAPS].offset + 4 * (6 + self._bitmaps.glyph_count)
+        metrics_compressed = self.tables[_PCF_METRICS].format & _PCF_COMPRESSED_METRICS
+        first_metric_offset = self.tables[_PCF_METRICS].offset + 6 if metrics_compressed else 8
+        metrics_size = 5 if metrics_compressed else 12
+
+        # These will each _tend to be_ forward reads in the file, at least
+        # sometimes we'll benefit from oofatfs's 512 byte cache and avoid
+        # excess reads
+        indices = [None] * len(code_points)
+        for i, code_point in enumerate(code_points):
+            enc1 = (code_point >> 8) & 0xff
+            enc2 = code_point & 0xff
+            
+            if enc1 < self._encoding.min_byte1 or enc1 >= self._encoding.max_byte1:
+                continue
+            if enc2 < self._encoding.min_byte2 or enc2 >= self._encoding.max_byte2:
+                continue
+
+            encoding_idx = (enc1 - self._encoding.min_byte1) * (self._encoding.max_byte2 - self._encoding.min_byte2 + 1) + enc2 - self._encoding.min_byte2
+            self.file.seek(indices_offset + 2 * encoding_idx)
+            glyph_idx, = self.read(">H")
+            indices[i] = glyph_idx
+
+        all_metrics = [None] * len(code_points)
+        for i, code_point in enumerate(code_points):
+            index = indices[i]
+            if index is None: continue
+            self.file.seek(first_metric_offset + metrics_size * index)
+            all_metrics[i] = self.read_metrics(metrics_compressed)
+        bitmap_offsets = [None] * len(code_points)
+        for i, code_point in enumerate(code_points):
+            index = indices[i]
+            if index is None: continue
+            self.file.seek(bitmap_offset_offsets + 4 * index)
+            bitmap_offset, = self.read(">I")
+            bitmap_offsets[i] = bitmap_offset
+
+        for i, code_point in enumerate(code_points):
+            metrics = all_metrics[i]
+            if metrics is None: continue
+            self.file.seek(first_bitmap_offset + bitmap_offsets[i])
+            shift = metrics.character_width
+            width = metrics.right_side_bearing - metrics.left_side_bearing
+            height = metrics.character_ascent + metrics.character_descent
+
+            gc.collect()
+            bitmap = self.bitmap_class(width, height , 2)
+            self._glyphs[code_point] = Glyph(bitmap, 0, 
+                        width,
+                        height,
+                        metrics.left_side_bearing,
+                        -metrics.character_descent,
+                        metrics.character_width,
+                        0)
+            words_per_row = ((width + 31) // 32)
+            buf = bytearray(4 * words_per_row)
+            start = 0
+            for i in range(height):
+                self.file.readinto(buf)
+                for j in range(width):
+                    bitmap[start] = not not (buf[j // 8] & (128 >> (j % 8)))
+                    start += 1
