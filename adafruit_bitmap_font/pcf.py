@@ -343,5 +343,6 @@ class PCF(GlyphCache):
             for i in range(height):
                 self.file.readinto(buf)
                 for j in range(width):
-                    bitmap[start] = not not (buf[j // 8] & (128 >> (j % 8)))
-                    start += 1
+                    if buf[j // 8] & (128 >> (j % 8)):
+                        bitmap[start + j] = 1
+                start += width
