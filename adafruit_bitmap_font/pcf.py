@@ -284,9 +284,9 @@ class PCF(GlyphCache):
             enc1 = (code_point >> 8) & 0xFF
             enc2 = code_point & 0xFF
 
-            if enc1 < self._encoding.min_byte1 or enc1 >= self._encoding.max_byte1:
+            if enc1 < self._encoding.min_byte1 or enc1 > self._encoding.max_byte1:
                 continue
-            if enc2 < self._encoding.min_byte2 or enc2 >= self._encoding.max_byte2:
+            if enc2 < self._encoding.min_byte2 or enc2 > self._encoding.max_byte2:
                 continue
 
             encoding_idx = (
