@@ -8,7 +8,7 @@ import struct
 
 
 class TTF:
-    def __init__(self, f):
+    def __init__(self, f, bitmap):
         f.seek(0)
         self.file = f
 

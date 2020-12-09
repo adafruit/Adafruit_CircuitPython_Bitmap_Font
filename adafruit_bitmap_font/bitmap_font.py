@@ -57,11 +57,12 @@ def load_font(filename, bitmap=None):
 
         return bdf.BDF(font_file, bitmap)
     if filename.endswith("pcf") and first_four == b"\x01fcp":
-        import pcf
+        from . import pcf
 
-        return pcf.PCF(font_file)
+        return pcf.PCF(font_file, bitmap)
     if filename.endswith("ttf") and first_four == b"\x00\x01\x00\x00":
-        import ttf
+        from . import ttf
 
-        return ttf.TTF(font_file)
-    return None
+        return ttf.TTF(font_file, bitmap)
+
+    raise ValueError("Unknown magic number %r" % first_four)
