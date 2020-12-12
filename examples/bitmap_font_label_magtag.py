@@ -15,9 +15,13 @@ display = board.DISPLAY
 # wait until we can refresh the display
 time.sleep(display.time_to_refresh)
 
+# try uncommenting different font files if you like
+font_file = "fonts/Arial-16.bdf"
+# font_file = "fonts/yasashi24.pcf"
+
 # Set text, font, and color
 text = "HELLO WORLD\nbitmap_font example"
-font = bitmap_font.load_font("fonts/Arial-16.bdf")
+font = bitmap_font.load_font(font_file)
 color = 0xFFFFFF
 background_color = 0x999999
 
