@@ -11,7 +11,16 @@ import board
 import displayio
 from adafruit_bitmap_font import bitmap_font
 
-font = bitmap_font.load_font("fonts/Arial-16.bdf")
+# use built in display (PyPortal, PyGamer, PyBadge, CLUE, etc.)
+# see guide for setting up external displays (TFT / OLED breakouts, RGB matrices, etc.)
+# https://learn.adafruit.com/circuitpython-display-support-using-displayio/display-and-display-bus
+display = board.DISPLAY
+
+# try uncommenting different font files if you like
+font_file = "fonts/Arial-16.bdf"
+# font_file = "fonts/yasashi24.pcf"
+
+font = bitmap_font.load_font(font_file)
 
 bitmap = displayio.Bitmap(320, 240, 2)
 
@@ -59,7 +68,7 @@ group.x = 20
 group.append(tile_grid)
 
 # Add the Group to the Display
-board.DISPLAY.show(group)
+display.show(group)
 
 while True:
     pass

@@ -13,7 +13,7 @@ Introduction
     :target: https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font/actions/
     :alt: Build Status
 
-Loads bitmap fonts into CircuitPython's displayio. BDF files are well supported. PCF and TTF
+Loads bitmap fonts into CircuitPython's displayio. BDF and PCF files are well supported. TTF
 support is not yet complete.
 
 Dependencies
@@ -53,13 +53,22 @@ To install in a virtual environment in your current project:
 Usage Example
 =============
 
-.. code-block::python
+.. code-block:: python
 
     from adafruit_bitmap_font import bitmap_font
     from displayio import Bitmap
-    font = bitmap_font.load_font("scientifica-11.bdf", Bitmap)
+    font = bitmap_font.load_font("fonts/Arial-16.bdf", Bitmap)
     print(font.get_glyph(ord("A")))
 
+
+Creating Fonts
+==============
+
+See `this learn guide <https://learn.adafruit.com/custom-fonts-for-pyportal-circuitpython-display>`_ for more information about building custom fornt files
+
+The command line tool :code:`otf2bdf` can be used make bdf files for use with this library.
+
+The command line tool :code:`bdftopcf` can be used make pcf files for use with this library.
 
 Contributing
 ============
