@@ -61,6 +61,15 @@ Usage Example
     print(font.get_glyph(ord("A")))
 
 
+Creating Fonts
+==============
+
+See `this learn guide <https://learn.adafruit.com/custom-fonts-for-pyportal-circuitpython-display>`_ for more information about building custom fornt files
+
+The command line tool :code:`otf2bdf` can be used make bdf files for use with this library.
+
+The command line tool :code:`bdftopcf` can be used make pcf files for use with this library.
+
 Contributing
 ============
 
