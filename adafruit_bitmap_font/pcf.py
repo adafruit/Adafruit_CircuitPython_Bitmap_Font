@@ -324,8 +324,8 @@ class PCF(GlyphCache):
             6 + self._bitmaps.glyph_count
         )
         metrics_compressed = self.tables[_PCF_METRICS].format & _PCF_COMPRESSED_METRICS
-        first_metric_offset = (
-            self.tables[_PCF_METRICS].offset + (6 if metrics_compressed else 8)
+        first_metric_offset = self.tables[_PCF_METRICS].offset + (
+            6 if metrics_compressed else 8
         )
         metrics_size = 5 if metrics_compressed else 12
 
