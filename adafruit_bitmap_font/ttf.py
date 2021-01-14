@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2019 Scott Shawcroft for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+
 # pylint: skip-file
 # Remove the above when TTF is actually supported.
 

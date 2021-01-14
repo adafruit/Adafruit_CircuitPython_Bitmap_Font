@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 """
 This example runs on PyPortal, or any Circuit Python device
 with a built-in screen that is at least 320x240 pixels.

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 """
 This example uses addfruit_display_text.label to display text using a custom font
 loaded by adafruit_bitmap_font.
