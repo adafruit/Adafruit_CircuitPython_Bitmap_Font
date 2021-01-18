@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+
+
 class Bitmap:
     def __init__(self, width, height, color_count):
         self.width = width

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 """
 This example runs on PyPortal, or any Circuit Python device
 with a built-in screen that is at least 320x240 pixels.
@@ -17,8 +20,8 @@ from adafruit_bitmap_font import bitmap_font
 display = board.DISPLAY
 
 # try uncommenting different font files if you like
-font_file = "fonts/Arial-16.bdf"
-# font_file = "fonts/yasashi24.pcf"
+font_file = "fonts/LeagueSpartan-Bold-16.bdf"
+# font_file = "fonts/Junction-regular-24.pcf"
 
 font = bitmap_font.load_font(font_file)
 
