@@ -57,7 +57,7 @@ Usage Example
 
     from adafruit_bitmap_font import bitmap_font
     from displayio import Bitmap
-    font = bitmap_font.load_font("fonts/Arial-16.bdf", Bitmap)
+    font = bitmap_font.load_font("fonts/LeagueSpartan-Bold-16.bdf", Bitmap)
     print(font.get_glyph(ord("A")))
 
 
