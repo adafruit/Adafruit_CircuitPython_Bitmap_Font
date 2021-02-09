@@ -10,5 +10,14 @@
 .. automodule:: adafruit_bitmap_font.bdf
   :members:
 
+.. automodule:: adafruit_bitmap_font.bitmap_font
+ :members:
+
 .. automodule:: adafruit_bitmap_font.glyph_cache
+ :members:
+
+.. automodule:: adafruit_bitmap_font.pcf
+ :members:
+
+.. automodule:: adafruit_bitmap_font.ttf
  :members:
