@@ -214,9 +214,7 @@ class PCF(GlyphCache):
             raise RuntimeError("Accelerator table missing")
 
         format_ = self._seek_table(accelerators)
-
         has_inkbounds = format_ & _PCF_ACCEL_W_INKBOUNDS
-        compressed_metrics = format_ & _PCF_COMPRESSED_METRICS
 
         (
             no_overlap,
@@ -231,11 +229,11 @@ class PCF(GlyphCache):
             font_descent,
             max_overlap,
         ) = self._read(">BBBBBBBBIII")
-        minbounds = self._read_metrics(compressed_metrics)
-        maxbounds = self._read_metrics(compressed_metrics)
+        minbounds = self._read_metrics(False)
+        maxbounds = self._read_metrics(False)
         if has_inkbounds:
-            ink_minbounds = self._read_metrics(compressed_metrics)
-            ink_maxbounds = self._read_metrics(compressed_metrics)
+            ink_minbounds = self._read_metrics(False)
+            ink_maxbounds = self._read_metrics(False)
         else:
             ink_minbounds = minbounds
             ink_maxbounds = maxbounds
