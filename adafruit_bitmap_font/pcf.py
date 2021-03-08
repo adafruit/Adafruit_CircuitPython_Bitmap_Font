@@ -28,25 +28,26 @@ import struct
 
 from fontio import Glyph
 from .glyph_cache import GlyphCache
+from micropython import const
 
-_PCF_PROPERTIES = 1 << 0
-_PCF_ACCELERATORS = 1 << 1
-_PCF_METRICS = 1 << 2
-_PCF_BITMAPS = 1 << 3
-_PCF_INK_METRICS = 1 << 4
-_PCF_BDF_ENCODINGS = 1 << 5
-_PCF_SWIDTHS = 1 << 6
-_PCF_GLYPH_NAMES = 1 << 7
-_PCF_BDF_ACCELERATORS = 1 << 8
+_PCF_PROPERTIES = const(1 << 0)
+_PCF_ACCELERATORS = const(1 << 1)
+_PCF_METRICS = const(1 << 2)
+_PCF_BITMAPS = const(1 << 3)
+_PCF_INK_METRICS = const(1 << 4)
+_PCF_BDF_ENCODINGS = const(1 << 5)
+_PCF_SWIDTHS = const(1 << 6)
+_PCF_GLYPH_NAMES = const(1 << 7)
+_PCF_BDF_ACCELERATORS = const(1 << 8)
 
-_PCF_DEFAULT_FORMAT = 0x00000000
-_PCF_ACCEL_W_INKBOUNDS = 0x00000100
-_PCF_COMPRESSED_METRICS = 0x00000100
+_PCF_DEFAULT_FORMAT = const(0x00000000)
+_PCF_ACCEL_W_INKBOUNDS = const(0x00000100)
+_PCF_COMPRESSED_METRICS = const(0x00000100)
 
-_PCF_GLYPH_PAD_MASK = 3 << 0  # See the bitmap table for explanation */
-_PCF_BYTE_MASK = 1 << 2  # If set then Most Sig Byte First */
-_PCF_BIT_MASK = 1 << 3  # If set then Most Sig Bit First */
-_PCF_SCAN_UNIT_MASK = 3 << 4
+_PCF_GLYPH_PAD_MASK = const(3 << 0)  # See the bitmap table for explanation */
+_PCF_BYTE_MASK = const(1 << 2)  # If set then Most Sig Byte First */
+_PCF_BIT_MASK = const(1 << 3)  # If set then Most Sig Bit First */
+_PCF_SCAN_UNIT_MASK = const(3 << 4)
 
 # https://fontforge.org/docs/techref/pcf-format.html
 
