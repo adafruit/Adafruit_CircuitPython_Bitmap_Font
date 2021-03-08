@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""Implementation of minimal fontio subset for testing"""
+
 import collections
 
 Glyph = collections.namedtuple(
