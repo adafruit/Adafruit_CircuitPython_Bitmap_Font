@@ -25,10 +25,10 @@ Implementation Notes
 from collections import namedtuple
 import gc
 import struct
+from micropython import const
 
 from fontio import Glyph
 from .glyph_cache import GlyphCache
-from micropython import const
 
 _PCF_PROPERTIES = const(1 << 0)
 _PCF_ACCELERATORS = const(1 << 1)

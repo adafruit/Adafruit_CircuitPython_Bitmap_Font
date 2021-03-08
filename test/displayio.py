@@ -2,7 +2,9 @@
 #
 # SPDX-License-Identifier: MIT
 
+"""Implementation of minimal displayio subset for testing"""
 
+# pylint: disable=all
 class Bitmap:
     def __init__(self, width, height, color_count):
         self.width = width
