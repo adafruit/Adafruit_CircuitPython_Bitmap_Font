@@ -30,6 +30,11 @@ from micropython import const
 from fontio import Glyph
 from .glyph_cache import GlyphCache
 
+try:
+    from bitmaptools import readinto as _bitmap_readinto
+except ImportError:
+    _bitmap_readinto = None # pylint: disable=invalid-name
+
 _PCF_PROPERTIES = const(1 << 0)
 _PCF_ACCELERATORS = const(1 << 1)
 _PCF_METRICS = const(1 << 2)
@@ -380,12 +385,22 @@ class PCF(GlyphCache):
             height = metrics.character_ascent + metrics.character_descent
 
             bitmap = bitmaps[i]
-            words_per_row = (width + 31) // 32
-            buf = bytearray(4 * words_per_row)
-            start = 0
-            for _ in range(height):
-                self.file.readinto(buf)
-                for k in range(width):
-                    if buf[k // 8] & (128 >> (k % 8)):
-                        bitmap[start + k] = 1
-                start += width
+
+            if _bitmap_readinto:
+                _bitmap_readinto(
+                    bitmap,
+                    self.file,
+                    bits_per_pixel=1,
+                    element_size=4,
+                    reverse_pixels_in_element=True,
+                )
+            else:
+                words_per_row = (width + 31) // 32
+                buf = bytearray(4 * words_per_row)
+                start = 0
+                for _ in range(height):
+                    self.file.readinto(buf)
+                    for k in range(width):
+                        if buf[k // 8] & (128 >> (k % 8)):
+                            bitmap[start + k] = 1
+                    start += width
