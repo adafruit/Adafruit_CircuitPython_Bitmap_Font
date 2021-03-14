@@ -33,7 +33,7 @@ from .glyph_cache import GlyphCache
 try:
     from bitmaptools import readinto as _bitmap_readinto
 except ImportError:
-    _bitmap_readinto = None # pylint: disable=invalid-name
+    _bitmap_readinto = None  # pylint: disable=invalid-name
 
 _PCF_PROPERTIES = const(1 << 0)
 _PCF_ACCELERATORS = const(1 << 1)
