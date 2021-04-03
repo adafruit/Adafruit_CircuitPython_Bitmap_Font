@@ -121,7 +121,12 @@ class BDF(GlyphCache):
         if not remaining:
             return
 
-        x, _, _, _ = self.get_bounding_box()
+        try:
+            x, _, _, _ = self.get_bounding_box()
+        except TypeError as error:
+            raise Exception(
+                "Font file does not have the FONTBOUNDINGBOX property. Try a different font"
+            ) from error
 
         self.file.seek(0)
         while True:
