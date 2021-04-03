@@ -9,9 +9,9 @@ More info here: https://emergent.unpythonic.net/01606790241
 """
 
 import board
+from forkawesome_icons import microchip, python, terminal
 from adafruit_display_text import label
 from adafruit_bitmap_font import bitmap_font
-from forkawesome_icons import microchip, python, terminal
 
 # use built in display (PyPortal, PyGamer, PyBadge, CLUE, etc.)
 # see guide for setting up external displays (TFT / OLED breakouts, RGB matrices, etc.)
