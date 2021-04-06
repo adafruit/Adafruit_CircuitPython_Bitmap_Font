@@ -12,15 +12,15 @@ from adafruit_bitmap_font import bitmap_font  # pylint: disable=wrong-import-pos
 font_file = "fonts/LeagueSpartan-Bold-16.bdf"
 
 # you can change the string that will get printed here
-specimen = "<3 Blinka"
+message = "<3 Blinka"
 
 font = bitmap_font.load_font(font_file)
 
 _, height, _, dy = font.get_bounding_box()
-font.load_glyphs(specimen)
+font.load_glyphs(message)
 
 for y in range(height):
-    for c in specimen:
+    for c in message:
         glyph = font.get_glyph(ord(c))
         if not glyph:
             continue
