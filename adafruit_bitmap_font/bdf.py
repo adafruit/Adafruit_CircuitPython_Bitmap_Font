@@ -43,6 +43,7 @@ class BDF(GlyphCache):
         line = str(line, "utf-8")
         if not line or not line.startswith("STARTFONT 2.1"):
             raise ValueError("Unsupported file version")
+        self._verify_bounding_box()
         self.point_size = None
         self.x_resolution = None
         self.y_resolution = None
@@ -82,19 +83,32 @@ class BDF(GlyphCache):
 
         return self._ascent
 
-    def get_bounding_box(self):
-        """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
+    def _verify_bounding_box(self):
+        """Private function to verify FOUNTBOUNDINGBOX parameter
+        This function will parse the first 10 lines of the font source
+        file to verify the value or raise an exception in case is not found
+        """
         self.file.seek(0)
-        while True:
+        # Normally information about the FONT is in the first four lines.
+        # Exception is when font file have a comment. Comments are three lines
+        # 10 lines is a safe bet
+        for _ in range(11):
             line = self.file.readline()
             line = str(line, "utf-8")
-            if not line:
-                break
-
             if line.startswith("FONTBOUNDINGBOX "):
                 _, x, y, x_offset, y_offset = line.split()
-                return (int(x), int(y), int(x_offset), int(y_offset))
-        return None
+                self._boundingbox = (int(x), int(y), int(x_offset), int(y_offset))
+
+        try:
+            self._boundingbox
+        except AttributeError as error:
+            raise Exception(
+                "Source file does not have the FOUNTBONDINGBOX parameter"
+            ) from error
+
+    def get_bounding_box(self):
+        """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
+        return self._boundingbox
 
     def load_glyphs(self, code_points):
         # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
@@ -121,12 +135,7 @@ class BDF(GlyphCache):
         if not remaining:
             return
 
-        try:
-            x, _, _, _ = self.get_bounding_box()
-        except TypeError as error:
-            raise Exception(
-                "Font file does not have the FONTBOUNDINGBOX property. Try a different font"
-            ) from error
+        x, _, _, _ = self._boundingbox
 
         self.file.seek(0)
         while True:
@@ -140,8 +149,6 @@ class BDF(GlyphCache):
             elif line.startswith(b"COMMENT"):
                 pass
             elif line.startswith(b"STARTCHAR"):
-                # print(lineno, line.strip())
-                # _, character_name = line.split()
                 character = True
             elif line.startswith(b"ENDCHAR"):
                 character = False
@@ -213,5 +220,4 @@ class BDF(GlyphCache):
                             x += 1
                     current_y += 1
             elif metadata:
-                # print(lineno, line.strip())
                 pass
