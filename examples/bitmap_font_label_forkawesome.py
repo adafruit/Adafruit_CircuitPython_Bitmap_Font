@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-This example uses addfruit_display_text.label to display fork awesome
+This example uses adafruit_display_text.label to display fork awesome
 icons.
 
 More info here: https://emergent.unpythonic.net/01606790241
@@ -13,7 +13,7 @@ from forkawesome_icons import microchip, python, terminal
 from adafruit_display_text import label
 from adafruit_bitmap_font import bitmap_font
 
-# use built in display (PyPortal, PyGamer, PyBadge, CLUE, etc.)
+# use built in display (MagTag, PyPortal, PyGamer, PyBadge, CLUE, etc.)
 # see guide for setting up external displays (TFT / OLED breakouts, RGB matrices, etc.)
 # https://learn.adafruit.com/circuitpython-display-support-using-displayio/display-and-display-bus
 display = board.DISPLAY
