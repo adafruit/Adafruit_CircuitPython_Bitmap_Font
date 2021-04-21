@@ -9,7 +9,7 @@ More info here: https://emergent.unpythonic.net/01606790241
 """
 
 import board
-from forkawesome_icons import microchip, python, terminal
+from bitmap_font_forkawesome_icons import microchip, python, terminal
 from adafruit_display_text import label
 from adafruit_bitmap_font import bitmap_font
 
