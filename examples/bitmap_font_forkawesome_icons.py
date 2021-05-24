@@ -201,7 +201,7 @@ compress = "\uf066"
 connectdevelop = "\uf20e"
 contao = "\uf26d"
 conway_glider = "\uf349"
-copyright = "\uf1f9"
+copyright = "\uf1f9"  # pylint: disable=redefined-builtin
 creative_commons = "\uf25e"
 credit_card_alt = "\uf283"
 credit_card = "\uf09d"
