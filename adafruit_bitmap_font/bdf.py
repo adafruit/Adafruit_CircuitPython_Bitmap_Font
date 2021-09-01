@@ -89,12 +89,16 @@ class BDF(GlyphCache):
         file to verify the value or raise an exception in case is not found
         """
         self.file.seek(0)
+        line = self.file.readline()
+        line = str(line, "utf-8")
         # Normally information about the FONT is in the first four lines.
         # Exception is when font file have a comment. Comments are three lines
         # 10 lines is a safe bet
         for _ in range(11):
-            line = self.file.readline()
-            line = str(line, "utf-8")
+            # Let's just ignore comment lines no matter how many there are
+            while line.startswith("COMMENT"):
+                line = self.file.readline()
+                line = str(line, "utf-8")
             if line.startswith("FONTBOUNDINGBOX "):
                 _, x, y, x_offset, y_offset = line.split()
                 self._boundingbox = (int(x), int(y), int(x_offset), int(y_offset))
