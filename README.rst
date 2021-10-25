@@ -70,6 +70,11 @@ The command line tool :code:`otf2bdf` can be used make bdf files for use with th
 
 The command line tool :code:`bdftopcf` can be used make pcf files for use with this library.
 
+Documentation
+=============
+
+API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/bitmap-font/en/latest/>`_.
+
 Contributing
 ============
 
