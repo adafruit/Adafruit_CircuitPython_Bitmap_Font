@@ -28,24 +28,24 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
 
 def load_font(filename, bitmap=None):
     """Loads a font file. Returns None if unsupported."""
-    # pylint: disable=import-outside-toplevel
+    # pylint: disable=import-outside-toplevel, consider-using-with
     if not bitmap:
         import displayio
 
         bitmap = displayio.Bitmap
-    with open(filename, "rb") as font_file:
-        first_four = font_file.read(4)
-        if filename.endswith("bdf") and first_four == b"STAR":
-            from . import bdf
+    font_file = open(filename, "rb")
+    first_four = font_file.read(4)
+    if filename.endswith("bdf") and first_four == b"STAR":
+        from . import bdf
 
-            return bdf.BDF(font_file, bitmap)
-        if filename.endswith("pcf") and first_four == b"\x01fcp":
-            from . import pcf
+        return bdf.BDF(font_file, bitmap)
+    if filename.endswith("pcf") and first_four == b"\x01fcp":
+        from . import pcf
 
-            return pcf.PCF(font_file, bitmap)
-        if filename.endswith("ttf") and first_four == b"\x00\x01\x00\x00":
-            from . import ttf
+        return pcf.PCF(font_file, bitmap)
+    if filename.endswith("ttf") and first_four == b"\x00\x01\x00\x00":
+        from . import ttf
 
-            return ttf.TTF(font_file, bitmap)
+        return ttf.TTF(font_file, bitmap)
 
     raise ValueError("Unknown magic number %r" % first_four)
