@@ -104,7 +104,7 @@ class BDF(GlyphCache):
             raise Exception(
                 "Source file does not have the FOUNTBOUNDINGBOX parameter"
             ) from error
-        
+
     def _readline_file(self):
         line = self.file.readline()
         return str(line, "utf-8")
