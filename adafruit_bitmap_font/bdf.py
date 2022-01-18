@@ -103,7 +103,7 @@ class BDF(GlyphCache):
             self._boundingbox
         except AttributeError as error:
             raise Exception(
-                "Source file does not have the FOUNTBONDINGBOX parameter"
+                "Source file does not have the FOUNTBOUNDINGBOX parameter"
             ) from error
 
     def get_bounding_box(self):
