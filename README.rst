@@ -2,7 +2,7 @@ Introduction
 ============
 
 .. image:: https://readthedocs.org/projects/adafruit-circuitpython-bitmap_font/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/bitmap-font/en/latest/
+    :target: https://docs.circuitpython.org/projects/bitmap-font/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
@@ -73,7 +73,7 @@ The command line tool :code:`bdftopcf` can be used make pcf files for use with t
 Documentation
 =============
 
-API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/bitmap-font/en/latest/>`_.
+API documentation for this library can be found on `Read the Docs <https://docs.circuitpython.org/projects/bitmap-font/en/latest/>`_.
 
 Contributing
 ============
