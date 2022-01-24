@@ -39,8 +39,7 @@ class BDF(GlyphCache):
         self.name = f
         self.file.seek(0)
         self.bitmap_class = bitmap_class
-        line = self.file.readline()
-        line = str(line, "utf-8")
+        line = self._readline_file()
         if not line or not line.startswith("STARTFONT 2.1"):
             raise ValueError("Unsupported file version")
         self._verify_bounding_box()
@@ -72,8 +71,7 @@ class BDF(GlyphCache):
         if self._ascent is None:
             self.file.seek(0)
             while True:
-                line = self.file.readline()
-                line = str(line, "utf-8")
+                line = self._readline_file()
                 if not line:
                     break
 
@@ -93,8 +91,9 @@ class BDF(GlyphCache):
         # Exception is when font file have a comment. Comments are three lines
         # 10 lines is a safe bet
         for _ in range(11):
-            line = self.file.readline()
-            line = str(line, "utf-8")
+            line = self._readline_file()
+            while line.startswith("COMMENT "):
+                line = self._readline_file()
             if line.startswith("FONTBOUNDINGBOX "):
                 _, x, y, x_offset, y_offset = line.split()
                 self._boundingbox = (int(x), int(y), int(x_offset), int(y_offset))
@@ -105,6 +104,10 @@ class BDF(GlyphCache):
             raise Exception(
                 "Source file does not have the FOUNTBOUNDINGBOX parameter"
             ) from error
+
+    def _readline_file(self):
+        line = self.file.readline()
+        return str(line, "utf-8")
 
     def get_bounding_box(self):
         """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
