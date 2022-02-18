@@ -33,13 +33,13 @@ PyPI <https://pypi.org/project/adafruit-circuitpython-bitmap_font/>`_. To instal
 
 .. code-block:: shell
 
-    pip3 install adafruit-circuitpython-bitmap_font
+    pip3 install adafruit-circuitpython-bitmap-font
 
 To install system-wide (this may be required in some cases):
 
 .. code-block:: shell
 
-    sudo pip3 install adafruit-circuitpython-bitmap_font
+    sudo pip3 install adafruit-circuitpython-bitmap-font
 
 To install in a virtual environment in your current project:
 
@@ -48,7 +48,7 @@ To install in a virtual environment in your current project:
     mkdir project-name && cd project-name
     python3 -m venv .env
     source .env/bin/activate
-    pip3 install adafruit-circuitpython-bitmap_font
+    pip3 install adafruit-circuitpython-bitmap-font
 
 Usage Example
 =============
