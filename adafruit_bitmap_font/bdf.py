@@ -22,8 +22,15 @@ Implementation Notes
 
 """
 
+try:
+    from typing import Union, Optional, Tuple
+except ImportError:
+    pass
+
 import gc
+from io import FileIO
 from fontio import Glyph
+from displayio import Bitmap
 from .glyph_cache import GlyphCache
 
 __version__ = "0.0.0-auto.0"
@@ -33,7 +40,7 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
 class BDF(GlyphCache):
     """Loads glyphs from a BDF file in the given bitmap_class."""
 
-    def __init__(self, f, bitmap_class):
+    def __init__(self, f: FileIO, bitmap_class: Bitmap) -> None:
         super().__init__()
         self.file = f
         self.name = f
@@ -50,7 +57,7 @@ class BDF(GlyphCache):
         self._descent = None
 
     @property
-    def descent(self):
+    def descent(self) -> Optional[int]:
         """The number of pixels below the baseline of a typical descender"""
         if self._descent is None:
             self.file.seek(0)
@@ -66,7 +73,7 @@ class BDF(GlyphCache):
         return self._descent
 
     @property
-    def ascent(self):
+    def ascent(self) -> Optional[int]:
         """The number of pixels above the baseline of a typical ascender"""
         if self._ascent is None:
             self.file.seek(0)
@@ -81,7 +88,7 @@ class BDF(GlyphCache):
 
         return self._ascent
 
-    def _verify_bounding_box(self):
+    def _verify_bounding_box(self) -> None:
         """Private function to verify FOUNTBOUNDINGBOX parameter
         This function will parse the first 10 lines of the font source
         file to verify the value or raise an exception in case is not found
@@ -105,15 +112,15 @@ class BDF(GlyphCache):
                 "Source file does not have the FOUNTBOUNDINGBOX parameter"
             ) from error
 
-    def _readline_file(self):
+    def _readline_file(self) -> str:
         line = self.file.readline()
         return str(line, "utf-8")
 
-    def get_bounding_box(self):
+    def get_bounding_box(self) -> Tuple[int, int, int, int]:
         """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
         return self._boundingbox
 
-    def load_glyphs(self, code_points):
+    def load_glyphs(self, code_points: Union[int, str, set]) -> None:
         # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
         metadata = True
         character = False

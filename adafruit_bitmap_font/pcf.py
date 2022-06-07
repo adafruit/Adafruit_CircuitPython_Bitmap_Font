@@ -22,12 +22,18 @@ Implementation Notes
 
 """
 
+try:
+    from typing import Union, Generator
+except ImportError:
+    pass
+
 from collections import namedtuple
 import gc
 import struct
+from io import FileIO
 from micropython import const
-
 from fontio import Glyph
+from displayio import Bitmap as displayioBitmap
 from .glyph_cache import GlyphCache
 
 try:
@@ -96,7 +102,7 @@ Bitmap = namedtuple("Bitmap", ("glyph_count", "bitmap_sizes"))
 class PCF(GlyphCache):
     """Loads glyphs from a PCF file in the given bitmap_class."""
 
-    def __init__(self, f, bitmap_class):
+    def __init__(self, f: FileIO, bitmap_class: displayioBitmap) -> None:
         super().__init__()
         self.file = f
         self.name = f
@@ -133,27 +139,27 @@ class PCF(GlyphCache):
         )
 
     @property
-    def ascent(self):
+    def ascent(self) -> int:
         """The number of pixels above the baseline of a typical ascender"""
         return self._ascent
 
     @property
-    def descent(self):
+    def descent(self) -> int:
         """The number of pixels below the baseline of a typical descender"""
         return self._descent
 
-    def get_bounding_box(self):
+    def get_bounding_box(self) -> tuple:
         """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
         return self._bounding_box
 
-    def _read(self, format_):
+    def _read(self, format_: str) -> tuple:
         size = struct.calcsize(format_)
         if size != len(self.buffer):
             self.buffer = bytearray(size)
         self.file.readinto(self.buffer)
         return struct.unpack_from(format_, self.buffer)
 
-    def _seek_table(self, table):
+    def _seek_table(self, table: dict) -> int:
         self.file.seek(table.offset)
         (format_,) = self._read("<I")
 
@@ -162,13 +168,13 @@ class PCF(GlyphCache):
 
         return format_
 
-    def _read_encoding_table(self):
+    def _read_encoding_table(self) -> Encoding:
         encoding = self.tables[_PCF_BDF_ENCODINGS]
         self._seek_table(encoding)
 
         return Encoding(*self._read(">hhhhh"))
 
-    def _read_bitmap_table(self):
+    def _read_bitmap_table(self) -> Bitmap:
         bitmaps = self.tables[_PCF_BITMAPS]
         format_ = self._seek_table(bitmaps)
 
@@ -177,7 +183,7 @@ class PCF(GlyphCache):
         bitmap_sizes = self._read(">4I")
         return Bitmap(glyph_count, bitmap_sizes[format_ & 3])
 
-    def _read_metrics(self, compressed_metrics):
+    def _read_metrics(self, compressed_metrics: bool) -> Metrics:
         if compressed_metrics:
             (
                 left_side_bearing,
@@ -210,7 +216,7 @@ class PCF(GlyphCache):
             attributes,
         )
 
-    def _read_accelerator_tables(self):
+    def _read_accelerator_tables(self) -> Accelerators:
         # pylint: disable=too-many-locals
         accelerators = self.tables.get(_PCF_BDF_ACCELERATORS)
         if not accelerators:
@@ -260,7 +266,7 @@ class PCF(GlyphCache):
             ink_maxbounds,
         )
 
-    def _read_properties(self):
+    def _read_properties(self) -> Generator[tuple, None, None]:
         property_table_offset = self.tables[_PCF_PROPERTIES]["offset"]
         self.file.seek(property_table_offset)
         (format_,) = self._read("<I")
@@ -291,7 +297,7 @@ class PCF(GlyphCache):
             else:
                 yield (string_map[name_offset], value)
 
-    def load_glyphs(self, code_points):
+    def load_glyphs(self, code_points: Union[int, str, set]) -> None:
         # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
         if isinstance(code_points, int):
             code_points = (code_points,)
