@@ -24,13 +24,12 @@ Implementation Notes
 
 try:
     from typing import Optional, Union
+    from displayio import Bitmap
+    from . import bdf
+    from . import pcf
+    from . import ttf
 except ImportError:
     pass
-
-from displayio import Bitmap
-from . import bdf
-from . import pcf
-from . import ttf
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
@@ -38,18 +37,26 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
 
 def load_font(
     filename: str, bitmap: Optional[Bitmap] = None
-) -> Union[bdf.BDF, pcf.PCF, ttf.TTF, None]:
+) -> Union[bdf.BDF, pcf.PCF, ttf.TTF]:
     """Loads a font file. Returns None if unsupported."""
-    # pylint: disable=import-outside-toplevel, consider-using-with
+    # pylint: disable=import-outside-toplevel, redefined-outer-name, consider-using-with
     if not bitmap:
-        bitmap = Bitmap
+        import displayio
+
+        bitmap = displayio.Bitmap
     font_file = open(filename, "rb")
     first_four = font_file.read(4)
     if filename.endswith("bdf") and first_four == b"STAR":
+        from . import bdf
+
         return bdf.BDF(font_file, bitmap)
     if filename.endswith("pcf") and first_four == b"\x01fcp":
+        from . import pcf
+
         return pcf.PCF(font_file, bitmap)
     if filename.endswith("ttf") and first_four == b"\x00\x01\x00\x00":
+        from . import ttf
+
         return ttf.TTF(font_file, bitmap)
 
     raise ValueError("Unknown magic number %r" % first_four)

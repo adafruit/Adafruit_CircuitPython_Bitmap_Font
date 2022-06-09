@@ -23,17 +23,17 @@ Implementation Notes
 """
 
 try:
-    from typing import Union, Generator
+    from typing import Union, Tuple, Iterator, Iterable
+    from io import FileIO
+    from displayio import Bitmap as displayioBitmap
 except ImportError:
     pass
 
 from collections import namedtuple
 import gc
 import struct
-from io import FileIO
 from micropython import const
 from fontio import Glyph
-from displayio import Bitmap as displayioBitmap
 from .glyph_cache import GlyphCache
 
 try:
@@ -148,18 +148,18 @@ class PCF(GlyphCache):
         """The number of pixels below the baseline of a typical descender"""
         return self._descent
 
-    def get_bounding_box(self) -> tuple:
+    def get_bounding_box(self) -> Tuple[int, int, int, int]:
         """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
         return self._bounding_box
 
-    def _read(self, format_: str) -> tuple:
+    def _read(self, format_: str) -> Tuple:
         size = struct.calcsize(format_)
         if size != len(self.buffer):
             self.buffer = bytearray(size)
         self.file.readinto(self.buffer)
         return struct.unpack_from(format_, self.buffer)
 
-    def _seek_table(self, table: dict) -> int:
+    def _seek_table(self, table: Table) -> int:
         self.file.seek(table.offset)
         (format_,) = self._read("<I")
 
@@ -266,7 +266,7 @@ class PCF(GlyphCache):
             ink_maxbounds,
         )
 
-    def _read_properties(self) -> Generator[tuple, None, None]:
+    def _read_properties(self) -> Iterator[Tuple[bytes, Union[bytes, int]]]:
         property_table_offset = self.tables[_PCF_PROPERTIES]["offset"]
         self.file.seek(property_table_offset)
         (format_,) = self._read("<I")
@@ -297,7 +297,7 @@ class PCF(GlyphCache):
             else:
                 yield (string_map[name_offset], value)
 
-    def load_glyphs(self, code_points: Union[int, str, set]) -> None:
+    def load_glyphs(self, code_points: Union[int, str, Iterable]) -> None:
         # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
         if isinstance(code_points, int):
             code_points = (code_points,)

@@ -23,12 +23,12 @@ Implementation Notes
 """
 
 try:
-    from typing import Union, Optional
+    from typing import Union, Iterable
+    from fontio import Glyph
 except ImportError:
     pass
 
 import gc
-from fontio import Glyph
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
@@ -40,10 +40,10 @@ class GlyphCache:
     def __init__(self) -> None:
         self._glyphs = {}
 
-    def load_glyphs(self, code_points: Union[int, str, set]) -> None:
+    def load_glyphs(self, code_points: Union[int, str, Iterable]) -> None:
         """Loads displayio.Glyph objects into the GlyphCache from the font."""
 
-    def get_glyph(self, code_point: int) -> Optional[Glyph]:
+    def get_glyph(self, code_point: int) -> Glyph:
         """Returns a displayio.Glyph for the given code point or None is unsupported."""
         if code_point in self._glyphs:
             return self._glyphs[code_point]

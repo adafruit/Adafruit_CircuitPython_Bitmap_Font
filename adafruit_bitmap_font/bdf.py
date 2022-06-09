@@ -23,14 +23,14 @@ Implementation Notes
 """
 
 try:
-    from typing import Union, Optional, Tuple
+    from typing import Union, Optional, Tuple, Iterable
+    from io import FileIO
+    from displayio import Bitmap
 except ImportError:
     pass
 
 import gc
-from io import FileIO
 from fontio import Glyph
-from displayio import Bitmap
 from .glyph_cache import GlyphCache
 
 __version__ = "0.0.0-auto.0"
@@ -120,7 +120,7 @@ class BDF(GlyphCache):
         """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
         return self._boundingbox
 
-    def load_glyphs(self, code_points: Union[int, str, set]) -> None:
+    def load_glyphs(self, code_points: Union[int, str, Iterable]) -> None:
         # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
         metadata = True
         character = False
