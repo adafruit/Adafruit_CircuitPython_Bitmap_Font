@@ -40,7 +40,7 @@ class GlyphCache:
     def __init__(self) -> None:
         self._glyphs = {}
 
-    def load_glyphs(self, code_points: Union[int, str, Iterable]) -> None:
+    def load_glyphs(self, code_points: Union[int, str, Iterable[int]]) -> None:
         """Loads displayio.Glyph objects into the GlyphCache from the font."""
 
     def get_glyph(self, code_point: int) -> Glyph:

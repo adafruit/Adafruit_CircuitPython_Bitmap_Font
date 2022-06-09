@@ -297,7 +297,7 @@ class PCF(GlyphCache):
             else:
                 yield (string_map[name_offset], value)
 
-    def load_glyphs(self, code_points: Union[int, str, Iterable]) -> None:
+    def load_glyphs(self, code_points: Union[int, str, Iterable[int]]) -> None:
         # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
         if isinstance(code_points, int):
             code_points = (code_points,)

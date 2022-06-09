@@ -120,7 +120,7 @@ class BDF(GlyphCache):
         """Return the maximum glyph size as a 4-tuple of: width, height, x_offset, y_offset"""
         return self._boundingbox
 
-    def load_glyphs(self, code_points: Union[int, str, Iterable]) -> None:
+    def load_glyphs(self, code_points: Union[int, str, Iterable[int]]) -> None:
         # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
         metadata = True
         character = False
