@@ -5,20 +5,26 @@
 # pylint: skip-file
 # Remove the above when TTF is actually supported.
 
-import struct
+try:
+    from typing import Tuple
+    from io import FileIO
+    from displayio import Bitmap
+except ImportError:
+    pass
 
+import struct
 
 # https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6glyf.html
 
 
 class TTF:
-    def __init__(self, f, bitmap):
+    def __init__(self, f: FileIO, bitmap: Bitmap) -> None:
         f.seek(0)
         self.file = f
 
         self.characters = {}
 
-        def read(format):
+        def read(format: str) -> Tuple:
             s = struct.calcsize(format)
             return struct.unpack_from(format, f.read(s))
 

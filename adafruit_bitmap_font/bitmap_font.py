@@ -22,13 +22,24 @@ Implementation Notes
 
 """
 
+try:
+    from typing import Optional, Union
+    from displayio import Bitmap
+    from . import bdf
+    from . import pcf
+    from . import ttf
+except ImportError:
+    pass
+
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
 
 
-def load_font(filename, bitmap=None):
+def load_font(
+    filename: str, bitmap: Optional[Bitmap] = None
+) -> Union[bdf.BDF, pcf.PCF, ttf.TTF]:
     """Loads a font file. Returns None if unsupported."""
-    # pylint: disable=import-outside-toplevel, consider-using-with
+    # pylint: disable=import-outside-toplevel, redefined-outer-name, consider-using-with
     if not bitmap:
         import displayio
 
