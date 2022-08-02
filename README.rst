@@ -13,6 +13,10 @@ Introduction
     :target: https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font/actions/
     :alt: Build Status
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: Code Style: Black
+
 Loads bitmap fonts into CircuitPython's displayio. BDF and PCF files are well supported. TTF
 support is not yet complete.
 
