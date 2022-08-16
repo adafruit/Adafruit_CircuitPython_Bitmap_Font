@@ -33,7 +33,7 @@ import gc
 from fontio import Glyph
 from .glyph_cache import GlyphCache
 
-__version__ = "0.0.0-auto.0"
+__version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
 
 
