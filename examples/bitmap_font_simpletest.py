@@ -36,4 +36,4 @@ for y in range(height):
         else:
             pixels = ""
         print("".join(pixels) + " " * (glyph.shift_x - len(pixels)), end="")
-    print()
+    print(end="\r")
