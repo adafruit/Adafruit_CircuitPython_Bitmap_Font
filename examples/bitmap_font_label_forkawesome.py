@@ -33,7 +33,7 @@ text_area.anchor_point = (0.5, 0.5)
 text_area.anchored_position = (display.width // 2, display.height // 2)
 
 # Show it
-display.show(text_area)
+display.root_group = text_area
 
 while True:
     pass
