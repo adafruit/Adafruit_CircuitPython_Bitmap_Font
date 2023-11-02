@@ -45,7 +45,7 @@ text_area.x = 20
 text_area.y = 20
 
 # Show it and refresh
-display.show(text_area)
+display.root_group = text_area
 display.refresh()
 while True:
     pass

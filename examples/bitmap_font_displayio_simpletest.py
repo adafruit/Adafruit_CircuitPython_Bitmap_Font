@@ -71,7 +71,7 @@ group.x = 20
 group.append(tile_grid)
 
 # Add the Group to the Display
-display.show(group)
+display.root_group = group
 
 while True:
     pass
