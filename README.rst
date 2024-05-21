@@ -68,7 +68,7 @@ Usage Example
 Creating Fonts
 ==============
 
-See `this learn guide <https://learn.adafruit.com/custom-fonts-for-pyportal-circuitpython-display>`_ for more information about building custom fornt files
+See `this learn guide <https://learn.adafruit.com/custom-fonts-for-pyportal-circuitpython-display>`_ for more information about building custom font files.
 
 The command line tool :code:`otf2bdf` can be used make bdf files for use with this library.
 
