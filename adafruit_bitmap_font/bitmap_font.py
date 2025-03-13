@@ -27,7 +27,7 @@ try:
 
     from displayio import Bitmap
 
-    from . import bdf, pcf, ttf
+    from . import bdf, lvfontbin, pcf, ttf
 except ImportError:
     pass
 
@@ -35,7 +35,9 @@ __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
 
 
-def load_font(filename: str, bitmap: Optional[Bitmap] = None) -> Union[bdf.BDF, pcf.PCF, ttf.TTF]:
+def load_font(
+    filename: str, bitmap: Optional[Bitmap] = None
+) -> Union[bdf.BDF, lvfontbin.LVGLFont, pcf.PCF, ttf.TTF]:
     """Loads a font file. Returns None if unsupported."""
     if not bitmap:
         import displayio
@@ -55,5 +57,12 @@ def load_font(filename: str, bitmap: Optional[Bitmap] = None) -> Union[bdf.BDF, 
         from . import ttf
 
         return ttf.TTF(font_file, bitmap)
+
+    if (
+        filename.endswith("bin") or filename.endswith("lvfontbin")
+    ) and first_four == LVGL_HEADER_SIZE:
+        from . import lvfontbin
+
+        return lvfontbin.LVGLFont(font_file, bitmap)
 
     raise ValueError("Unknown magic number %r" % first_four)
