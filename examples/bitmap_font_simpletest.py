@@ -6,7 +6,7 @@ This example loads a font and uses it to print an
 ASCII art representation of the given string specimen
 """
 
-from adafruit_bitmap_font import bitmap_font  # pylint: disable=wrong-import-position
+from adafruit_bitmap_font import bitmap_font
 
 # you can change this to a different bdf or pcf font file
 font_file = "fonts/LeagueSpartan-Bold-16.bdf"

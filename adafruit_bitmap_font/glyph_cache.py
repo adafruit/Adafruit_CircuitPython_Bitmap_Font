@@ -23,7 +23,8 @@ Implementation Notes
 """
 
 try:
-    from typing import Union, Iterable
+    from typing import Iterable, Union
+
     from fontio import Glyph
 except ImportError:
     pass

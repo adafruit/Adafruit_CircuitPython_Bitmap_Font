@@ -2,12 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 
-# pylint: skip-file
 # Remove the above when TTF is actually supported.
 
 try:
-    from typing import Tuple
     from io import FileIO
+    from typing import Tuple
+
     from displayio import Bitmap
 except ImportError:
     pass
@@ -58,7 +58,7 @@ class TTF:
                 for _ in range(numberOfContours):
                     ends.append(read(">H"))
                 instructionLength = read(">h")[0]
-                instructions = read(">{}s".format(instructionLength))[0]
+                instructions = read(f">{instructionLength}s")[0]
                 print(instructions)
                 break
             else:

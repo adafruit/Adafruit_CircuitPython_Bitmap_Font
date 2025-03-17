@@ -23,23 +23,26 @@ Implementation Notes
 """
 
 try:
-    from typing import Union, Tuple, Iterator, Iterable
     from io import FileIO
+    from typing import Iterable, Iterator, Tuple, Union
+
     from displayio import Bitmap as displayioBitmap
 except ImportError:
     pass
 
-from collections import namedtuple
 import gc
 import struct
-from micropython import const
+from collections import namedtuple
+
 from fontio import Glyph
+from micropython import const
+
 from .glyph_cache import GlyphCache
 
 try:
     from bitmaptools import readinto as _bitmap_readinto
 except ImportError:
-    _bitmap_readinto = None  # pylint: disable=invalid-name
+    _bitmap_readinto = None
 
 _PCF_PROPERTIES = const(1 << 0)
 _PCF_ACCELERATORS = const(1 << 1)
@@ -217,7 +220,6 @@ class PCF(GlyphCache):
         )
 
     def _read_accelerator_tables(self) -> Accelerators:
-        # pylint: disable=too-many-locals
         accelerators = self.tables.get(_PCF_BDF_ACCELERATORS)
         if not accelerators:
             accelerators = self.tables.get(_PCF_ACCELERATORS)
@@ -298,27 +300,20 @@ class PCF(GlyphCache):
                 yield (string_map[name_offset], value)
 
     def load_glyphs(self, code_points: Union[int, str, Iterable[int]]) -> None:
-        # pylint: disable=too-many-statements,too-many-branches,too-many-nested-blocks,too-many-locals
         if isinstance(code_points, int):
             code_points = (code_points,)
         elif isinstance(code_points, str):
             code_points = [ord(c) for c in code_points]
 
-        code_points = sorted(
-            c for c in code_points if self._glyphs.get(c, None) is None
-        )
+        code_points = sorted(c for c in code_points if self._glyphs.get(c, None) is None)
         if not code_points:
             return
 
         indices_offset = self.tables[_PCF_BDF_ENCODINGS].offset + 14
         bitmap_offset_offsets = self.tables[_PCF_BITMAPS].offset + 8
-        first_bitmap_offset = self.tables[_PCF_BITMAPS].offset + 4 * (
-            6 + self._bitmaps.glyph_count
-        )
+        first_bitmap_offset = self.tables[_PCF_BITMAPS].offset + 4 * (6 + self._bitmaps.glyph_count)
         metrics_compressed = self.tables[_PCF_METRICS].format & _PCF_COMPRESSED_METRICS
-        first_metric_offset = self.tables[_PCF_METRICS].offset + (
-            6 if metrics_compressed else 8
-        )
+        first_metric_offset = self.tables[_PCF_METRICS].offset + (6 if metrics_compressed else 8)
         metrics_size = 5 if metrics_compressed else 12
 
         # These will each _tend to be_ forward reads in the file, at least
@@ -365,7 +360,7 @@ class PCF(GlyphCache):
         # once
         gc.collect()
         bitmaps = [None] * len(code_points)
-        for i in range(len(all_metrics)):  # pylint: disable=consider-using-enumerate
+        for i in range(len(all_metrics)):
             metrics = all_metrics[i]
             if metrics is not None:
                 width = metrics.right_side_bearing - metrics.left_side_bearing

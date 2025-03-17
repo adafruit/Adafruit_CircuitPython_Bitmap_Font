@@ -9,9 +9,9 @@ It will use adafruit_bitmap_font to load a font and fill a
 bitmap with pixels matching glyphs from a given String
 """
 
-
 import board
 import displayio
+
 from adafruit_bitmap_font import bitmap_font
 
 # use built in display (MagTag, PyPortal, PyGamer, PyBadge, CLUE, etc.)

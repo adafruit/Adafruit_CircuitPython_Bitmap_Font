@@ -8,6 +8,7 @@ loaded by adafruit_bitmap_font
 
 import board
 from adafruit_display_text import label
+
 from adafruit_bitmap_font import bitmap_font
 
 # use built in display (MagTag, PyPortal, PyGamer, PyBadge, CLUE, etc.)
