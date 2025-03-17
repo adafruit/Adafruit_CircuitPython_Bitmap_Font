@@ -6,9 +6,12 @@ This example uses adafruit_display_text.label to display text using a custom fon
 loaded by adafruit_bitmap_font.
 Adapted for use on MagTag
 """
+
 import time
+
 import board
 from adafruit_display_text import label
+
 from adafruit_bitmap_font import bitmap_font
 
 # use built in display (MagTag, PyPortal, PyGamer, PyBadge, CLUE, etc.)

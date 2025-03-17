@@ -9,8 +9,9 @@ More info here: https://emergent.unpythonic.net/01606790241
 """
 
 import board
-from bitmap_font_forkawesome_icons import microchip, python, terminal
 from adafruit_display_text import label
+from bitmap_font_forkawesome_icons import microchip, python, terminal
+
 from adafruit_bitmap_font import bitmap_font
 
 # use built in display (MagTag, PyPortal, PyGamer, PyBadge, CLUE, etc.)
@@ -21,7 +22,7 @@ display = board.DISPLAY
 font_file = "fonts/forkawesome-42.pcf"
 
 # Set text, font, and color
-text = "{}  {}  {}".format(terminal, python, microchip)
+text = f"{terminal}  {python}  {microchip}"
 font = bitmap_font.load_font(font_file)
 color = 0xFF00FF
 

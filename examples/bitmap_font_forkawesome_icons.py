@@ -6,6 +6,7 @@ Helper for fork awesome icon names.
 
 More info here: https://emergent.unpythonic.net/01606790241
 """
+
 activitypub = "\uf2f2"
 address_book_o = "\uf2ba"
 address_book = "\uf2b9"
@@ -201,7 +202,7 @@ compress = "\uf066"
 connectdevelop = "\uf20e"
 contao = "\uf26d"
 conway_glider = "\uf349"
-copyright = "\uf1f9"  # pylint: disable=redefined-builtin
+copyright = "\uf1f9"
 creative_commons = "\uf25e"
 credit_card_alt = "\uf283"
 credit_card = "\uf09d"
