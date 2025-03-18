@@ -34,10 +34,6 @@ from fontio import Glyph
 
 from .glyph_cache import GlyphCache
 
-# The LVGL file starts with the size of the 'head' section. It hasn't changed in five years so
-# we can treat it like a magic number.
-LVGL_HEADER_SIZE = b"\x30\x00\x00\x00"
-
 
 class LVGLFont(GlyphCache):
     """Loads glyphs from a LVGL binary font file in the given bitmap_class.
