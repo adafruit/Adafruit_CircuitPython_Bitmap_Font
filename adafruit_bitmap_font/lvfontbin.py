@@ -45,6 +45,12 @@ class LVGLFont(GlyphCache):
     """
 
     def __init__(self, f: FileIO, bitmap_class=None):
+        """Initialize LVGL font.
+
+        Args:
+            f: File object containing the LVGL font data
+            bitmap_class: Optional bitmap class to use for glyphs. Defaults to displayio.Bitmap.
+        """
         super().__init__()
         f.seek(0)
         self.file = f
@@ -77,7 +83,7 @@ class LVGLFont(GlyphCache):
                 self._x_offset = 0
                 self._y_offset = self._descent
             elif table_marker == b"cmap":
-                self._load_cmap(remaining_section)
+                self._load_cmap(remaining_section, section_start)
             elif table_marker == b"loca":
                 self._max_cid = struct.unpack("<I", remaining_section[0:4])[0]
                 self._loca_start = section_start + 4
@@ -112,21 +118,40 @@ class LVGLFont(GlyphCache):
         self._compression_alg = data[33]
         self._subpixel_rendering = data[34]
 
-    def _load_cmap(self, data):
+    def _load_cmap(self, data, section_start):
         data = memoryview(data)
         subtable_count = struct.unpack("<I", data[0:4])[0]
-        self._cmap_tiny = []
+        self._cmap_subtables = []
+        data_offset = 4
+
         for i in range(subtable_count):
-            subtable_header = data[4 + 16 * i : 4 + 16 * (i + 1)]
-            (_, range_start, range_length, glyph_offset, _) = struct.unpack(
-                "<IIHHH", subtable_header[:14]
+            subtable_header = data[data_offset + 16 * i : data_offset + 16 * (i + 1)]
+            # Subtable header format:
+            # 4 bytes - data offset
+            # 4 bytes - range start
+            # 2 bytes - range length
+            # 2 bytes - glyph ID offset
+            # 2 bytes - data entries count
+            # 1 byte - format type
+            # 1 byte - padding
+            if len(subtable_header) < 16:
+                raise RuntimeError("Invalid cmap subtable header size")
+
+            (data_offset_val, range_start, range_length, glyph_offset, entries_count) = (
+                struct.unpack("<IIHHH", subtable_header[:14])
             )
             format_type = subtable_header[14]
 
-            if format_type != 2:
-                raise RuntimeError(f"Unsupported cmap format {format_type}")
-
-            self._cmap_tiny.append((range_start, range_start + range_length, glyph_offset))
+            # Store subtable header info
+            subtable_info = {
+                "format": format_type,
+                "data_offset": data_offset_val + section_start - 8,
+                "range_start": range_start,
+                "range_length": range_length,
+                "glyph_offset": glyph_offset,
+                "entries_count": entries_count,
+            }
+            self._cmap_subtables.append(subtable_info)
 
     @property
     def ascent(self) -> int:
@@ -177,10 +202,38 @@ class LVGLFont(GlyphCache):
         for code_point in code_points:
             # Find character ID in the cmap table
             cid = None
-            for start, end, offset in self._cmap_tiny:
-                if start <= code_point < end:
-                    cid = offset + (code_point - start)
-                    break
+
+            # Search through all subtables
+            for subtable in self._cmap_subtables:
+                format_type = subtable["format"]
+                range_start = subtable["range_start"]
+                range_length = subtable["range_length"]
+                glyph_offset = subtable["glyph_offset"]
+                entries_count = subtable["entries_count"]
+                data_offset = subtable["data_offset"]
+
+                if range_start <= code_point < range_start + range_length:
+                    if format_type == 0:  # Continuous
+                        # Read the glyph IDs from the data section (single bytes)
+                        self.file.seek(data_offset)
+                        subtable_data = self.file.read(entries_count)
+                        glyph_id = subtable_data[code_point - range_start]
+                        cid = glyph_id + glyph_offset
+                        break
+                    elif format_type == 2:  # Format 0 tiny
+                        cid = glyph_offset + (code_point - range_start)
+                        break
+                    elif format_type == 3:  # Sparse tiny
+                        # Read the codepoint offsets from the data section
+                        self.file.seek(data_offset)
+                        subtable_data = self.file.read(entries_count * 2)
+                        for i in range(entries_count):
+                            cp_offset = struct.unpack("<H", subtable_data[i * 2 : (i + 1) * 2])[0]
+                            if cp_offset + range_start == code_point:
+                                cid = glyph_offset + i
+                                break
+                        if cid is not None:
+                            break
 
             if cid is None or cid >= self._max_cid:
                 self._glyphs[code_point] = None
