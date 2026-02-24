@@ -266,14 +266,14 @@ class LVGLFont(GlyphCache):
             bbox_h = self._read_bits(self._glyph_bbox_wh_bits)
 
             # Create bitmap for the glyph
-            bitmap = self.bitmap_class(bbox_w, bbox_h, 2)
+            bitmap = self.bitmap_class(bbox_w, bbox_h, 2**self._bits_per_pixel)
 
             # Read bitmap data (starting from the current bit position)
             for y in range(bbox_h):
                 for x in range(bbox_w):
                     pixel_value = self._read_bits(self._bits_per_pixel)
-                    if pixel_value > 0:  # Convert any non-zero value to 1
-                        bitmap[x, y] = 1
+                    if pixel_value > 0:
+                        bitmap[x, y] = pixel_value
 
             # Create and cache the glyph
             self._glyphs[code_point] = Glyph(
