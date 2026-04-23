@@ -255,12 +255,12 @@ class LVGLFont(GlyphCache):
             bbox_x = self._read_bits(self._glyph_bbox_xy_bits)
             # Convert to signed value if needed (using two's complement)
             if bbox_x & (1 << (self._glyph_bbox_xy_bits - 1)):
-                bbox_x = bbox_x - (1 << self._glyph_bbox_xy_bits)
+                bbox_x -= 1 << self._glyph_bbox_xy_bits
 
             bbox_y = self._read_bits(self._glyph_bbox_xy_bits)
             # Convert to signed value if needed (using two's complement)
             if bbox_y & (1 << (self._glyph_bbox_xy_bits - 1)):
-                bbox_y = bbox_y - (1 << self._glyph_bbox_xy_bits)
+                bbox_y -= 1 << self._glyph_bbox_xy_bits
 
             bbox_w = self._read_bits(self._glyph_bbox_wh_bits)
             bbox_h = self._read_bits(self._glyph_bbox_wh_bits)

@@ -70,4 +70,4 @@ def load_font(
 
         return lvfontbin.LVGLFont(font_file, bitmap)
 
-    raise ValueError("Unknown magic number %r" % first_four)
+    raise ValueError(f"Unknown magic number {first_four!r}")
