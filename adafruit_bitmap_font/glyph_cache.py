@@ -32,8 +32,6 @@ try:
 except ImportError:
     pass
 
-import gc
-
 __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
 
@@ -53,7 +51,6 @@ class GlyphCache:
             return self._glyphs[code_point]
 
         self.load_glyphs(code_point)
-        gc.collect()
 
         # Implementations of load_glyphs should cache None for codepoints that
         # don't exist in the font, but defensively provide a default here in
