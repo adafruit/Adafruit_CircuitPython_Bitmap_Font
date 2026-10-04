@@ -254,6 +254,8 @@ class LVGLFont(GlyphCache):
             # Read glyph header data
             self._seek(self._glyf_start + glyph_offset)
             glyph_advance = self._read_bits(self._glyph_advance_bits)
+            if self._advance_format == 1:  # 4 fractional bits
+                glyph_advance = (glyph_advance + 8) >> 4
 
             # Read and convert signed bbox_x and bbox_y
             bbox_x = self._read_bits(self._glyph_bbox_xy_bits)
