@@ -35,6 +35,7 @@ except ImportError:
     pass
 
 import gc
+import sys
 
 from fontio import Glyph
 
@@ -42,6 +43,9 @@ from .glyph_cache import GlyphCache
 
 __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Bitmap_Font.git"
+
+# Collect before each Glyph so freed blocks are reused on small heaps (CircuitPython only)
+_COLLECT_PER_GLYPH = sys.implementation.name == "circuitpython"
 
 
 class BDF(GlyphCache):
@@ -171,7 +175,8 @@ class BDF(GlyphCache):
                 if desired_character:
                     bounds = current_info["bounds"]
                     shift = current_info["shift"]
-                    gc.collect()
+                    if _COLLECT_PER_GLYPH:
+                        gc.collect()
                     self._glyphs[code_point] = Glyph(
                         current_info["bitmap"],
                         0,
