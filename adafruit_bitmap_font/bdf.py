@@ -234,10 +234,9 @@ class BDF(GlyphCache):
                         for j in range(7, -1, -1):
                             if x >= width:
                                 break
-                            bit = 0
-                            if val & (1 << j) != 0:
-                                bit = 1
-                            current_info["bitmap"][start + x] = bit
+                            # New bitmaps start zeroed; write only set bits
+                            if val & (1 << j):
+                                current_info["bitmap"][start + x] = 1
                             x += 1
                     current_y += 1
             elif metadata:
