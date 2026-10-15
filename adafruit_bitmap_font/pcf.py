@@ -314,7 +314,7 @@ class PCF(GlyphCache):
         elif isinstance(code_points, str):
             code_points = [ord(c) for c in code_points]
 
-        code_points = sorted(c for c in code_points if c not in self._glyphs)
+        code_points = sorted({c for c in code_points if c not in self._glyphs})
         if not code_points:
             return
 
