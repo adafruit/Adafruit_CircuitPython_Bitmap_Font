@@ -199,7 +199,7 @@ class LVGLFont(GlyphCache):
             code_points = [ord(c) for c in code_points]
 
         # Only load glyphs that aren't already cached
-        code_points = sorted(c for c in code_points if c not in self._glyphs)
+        code_points = sorted({c for c in code_points if c not in self._glyphs})
         if not code_points:
             return
 
